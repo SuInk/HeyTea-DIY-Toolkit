@@ -4,10 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "server:install": "npm --prefix server install",
-    "frontend:install": "npm --prefix frontend install",
-    "setup": "npm run server:install && npm run frontend:install",
-    "postinstall": "npm run setup",
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix frontend\"",
     "frontend:build": "npm run build --prefix frontend",
     "frontend:dev": "npm run dev --prefix frontend",
@@ -30,5 +26,9 @@
   "homepage": "https://github.com/SuInk/heytea-picture#readme",
   "devDependencies": {
     "concurrently": "^9.0.0"
-  }
+  },
+  "workspaces": [
+    "frontend",
+    "server"
+  ]
 }
