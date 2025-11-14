@@ -4,13 +4,11 @@ Vue 3 + TypeScript + Element Plus + Tailwind CSS + Node.js 代理，实现喜茶
 
 ## 功能概览
 
-- 手机号短信登录（Node 端转发喜茶接口，前端触发腾讯人机验证）
+- 手机号短信登录（Node 端转发喜茶接口）
 - Token 快速登录与本地记忆
 - 596×832 画布自动缩放、裁切、灰度、强制 PNG、自动压缩至 ≤ 200KB
 - 处理结果预览、下载、重复上传提醒
 - Node 代理直连官方 API：验证码、登录、用户信息、杯贴上传，并可托管前端静态文件
-
-⚠️ **风险提示**：所有真实请求仍然指向 `app-go.heytea.com`。若官方进一步收紧校验（设备指纹、IP 白名单等），代理同样会失效。仅供学习交流，请勿商用。
 
 ## 本地开发
 
@@ -45,7 +43,7 @@ npm start       # Express 读取 dist 并提供 /api/*
 | Install Command   | `npm install`                     |
 | Output Directory  | `frontend/dist` *(require setting before deploy)* |
 
-仓库根目录包含 `api/sms/send.js`、`api/login/sms.js`、`api/user.js`、`api/upload.js` 等 Serverless 端点（复用 Express 逻辑），Vercel 会自动部署同源 `/api/*`，前端默认调用即可，无需再填写 `VITE_API_BASE`。
+仓库根目录包含 `api/index.js`（复用 Express 逻辑的捕获所有 `/api/*` 端点），Vercel 会自动部署同源 `/api/*`，前端默认调用即可，无需再填写 `VITE_API_BASE`。
 
 ## 自建 Node 代理（可选）
 

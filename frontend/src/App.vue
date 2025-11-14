@@ -7,7 +7,7 @@
       </header>
 
       <div class="grid gap-6 lg:grid-cols-5">
-        <section class="lg:col-span-3">
+        <section class="lg:col-span-3 order-2">
           <el-card body-style="{padding: '1.5rem'}" shadow="hover" class="space-y-6">
             <div class="flex flex-wrap items-center gap-3">
               <el-button type="primary" @click="triggerFileDialog">选择或拖入 PNG / JPG</el-button>
@@ -118,26 +118,26 @@
           </el-card>
         </section>
 
-        <section class="lg:col-span-2">
+        <section class="lg:col-span-2 order-1">
           <el-card body-style="{padding: '1.5rem'}" shadow="hover" class="space-y-4">
             <div
               :class="[
                 'rounded-xl border p-4 text-sm',
                 user
-                  ? 'border-green-400/70 bg-green-400/20 text-green'
-                  : 'text-green/10 bg-slate-900/40 text-slate-200'
+                  ? 'border-green-400/60 bg-green-500/20 text-white'
+                  : 'border-white/10 bg-slate-900/40 text-slate-200'
               ]"
             >
               <p
                 class="text-xs uppercase tracking-widest"
-                :class="user ? 'text-green/90' : 'text-slate-400'"
+                :class="user ? 'text-white/90' : 'text-slate-400'"
               >
                 当前状态
               </p>
-              <p class="text-2xl font-semibold mt-1 text-green">
+              <p class="text-2xl font-semibold mt-1 text-white">
                 {{ user ? `已登录 ${user.name}` : '未登录' }}
               </p>
-              <p v-if="user" class="text-sm mt-1 text-green">
+              <p v-if="user" class="text-sm mt-1 text-white">
                 ID: {{ user.user_main_id }}
               </p>
             </div>
