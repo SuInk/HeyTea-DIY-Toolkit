@@ -12,7 +12,6 @@ const { encryptHeyteaMobile, timestampSign, decryptResponseData } = require('./h
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
-
 const isVercel = Boolean(process.env.VERCEL);
 
 app.use(cors({ origin: true }));
