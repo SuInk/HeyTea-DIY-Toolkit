@@ -167,15 +167,27 @@
                   :closable="false"
                   title="提示"
                   type="info"
-                  description="可切换灰度/裁剪模式，确保宽高符合喜茶要求（596×832，小于 200KB）。"
+                  description="可在黑白 / 灰度 / 原图模式间切换，并调整裁剪方式，确保宽高符合喜茶要求（596×832，小于 200KB）。"
                   show-icon
                 />
               </div>
 
               <div class="space-y-4">
                 <el-form label-width="110px" class="text-slate-900">
-                <el-form-item label="灰度滤镜">
-                  <el-switch v-model="grayscale" />
+                <el-form-item label="色彩模式">
+                  <el-radio-group v-model="toneMode" size="small">
+                    <el-radio-button label="binary">黑白</el-radio-button>
+                    <el-radio-button label="grayscale">灰度</el-radio-button>
+                    <el-radio-button label="original">原图</el-radio-button>
+                  </el-radio-group>
+                </el-form-item>
+                <el-form-item v-if="toneMode === 'binary'" label="黑白阈值">
+                  <div class="w-full">
+                    <el-slider v-model="binaryThreshold" :min="60" :max="220" :step="5" show-stops />
+                    <p class="mt-1 text-xs text-slate-400">
+                      阈值越高整体越亮（当前：{{ binaryThreshold }}）。
+                    </p>
+                  </div>
                 </el-form-item>
                 <el-form-item label="缩放策略">
                   <el-select v-model="fitMode" placeholder="选择适配方式">
@@ -259,7 +271,7 @@ import { isAxiosError } from 'axios';
 
 import { CAPTCHA_APP_ID, CUP_HEIGHT, CUP_WIDTH, MAX_UPLOAD_BYTES } from '@/config/heytea';
 import { requestCaptcha } from '@/utils/captcha';
-import { readFileAsImage, renderToCupCanvas } from '@/utils/image';
+import { readFileAsImage, renderToCupCanvas, type ToneMode } from '@/utils/image';
 import {
   fetchUserInfo,
   loginWithSms,
@@ -343,9 +355,11 @@ let countdownTimer: number | null = null;
 
 const fileInputRef = ref<HTMLInputElement>();
 const canvasRef = ref<HTMLCanvasElement>();
+
 const workingImage = ref<HTMLImageElement | null>(null);
 const processedBlob = ref<Blob | null>(null);
-const grayscale = ref(true);
+const toneMode = ref<ToneMode>('binary');
+const binaryThreshold = ref(170);
 const fitMode = ref<'cover' | 'contain'>('cover');
 const forcePng = ref(true);
 const isRendering = ref(false);
@@ -526,7 +540,8 @@ async function renderPreview() {
   isRendering.value = true;
   try {
     const blob = await renderToCupCanvas(canvasRef.value, workingImage.value, {
-      grayscale: grayscale.value,
+      toneMode: toneMode.value,
+      threshold: binaryThreshold.value,
       fit: fitMode.value,
       targetFormat: forcePng.value ? 'png' : 'auto',
       maxBytes: MAX_UPLOAD_BYTES,
@@ -608,7 +623,7 @@ function handleDownload() {
   URL.revokeObjectURL(url);
 }
 
-watch([grayscale, fitMode, forcePng], () => {
+watch([toneMode, binaryThreshold, fitMode, forcePng], () => {
   if (workingImage.value) {
     renderPreview();
   }

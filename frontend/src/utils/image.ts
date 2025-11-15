@@ -1,7 +1,10 @@
 import { CUP_HEIGHT, CUP_WIDTH, MAX_UPLOAD_BYTES } from '@/config/heytea';
 
+export type ToneMode = 'binary' | 'grayscale' | 'original';
+
 export interface RenderOptions {
-  grayscale: boolean;
+  toneMode: ToneMode;
+  threshold?: number;
   fit: 'contain' | 'cover';
   maxBytes?: number;
   targetFormat?: 'png' | 'auto';
@@ -56,12 +59,19 @@ export async function renderToCupCanvas(
 
   ctx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
 
-  if (options.grayscale) {
+  const toneMode = options.toneMode ?? 'binary';
+  if (toneMode !== 'original') {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const { data } = imageData;
-    for (let i = 0; i < data.length; i += 4) {
-      const avg = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-      data[i] = data[i + 1] = data[i + 2] = avg;
+    switch (toneMode) {
+      case 'binary':
+        applyBinaryThreshold(imageData, options.threshold);
+        break;
+      case 'grayscale':
+        applyGrayscale(imageData);
+        break;
+      default:
+        applyBinaryThreshold(imageData, options.threshold);
+        break;
     }
     ctx.putImageData(imageData, 0, 0);
   }
@@ -157,6 +167,24 @@ function quantizeColors(data: Uint8ClampedArray, step: number) {
     data[i] = Math.min(255, Math.round(data[i] / divisor) * divisor);
     data[i + 1] = Math.min(255, Math.round(data[i + 1] / divisor) * divisor);
     data[i + 2] = Math.min(255, Math.round(data[i + 2] / divisor) * divisor);
+  }
+}
+
+function applyGrayscale(imageData: ImageData) {
+  const { data } = imageData;
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    data[i] = data[i + 1] = data[i + 2] = gray;
+  }
+}
+
+function applyBinaryThreshold(imageData: ImageData, threshold = 170) {
+  const limit = Math.max(0, Math.min(255, Math.round(threshold)));
+  const { data } = imageData;
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    const value = gray >= limit ? 255 : 0;
+    data[i] = data[i + 1] = data[i + 2] = value;
   }
 }
 
