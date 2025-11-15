@@ -2,6 +2,10 @@
 
 Vue 3 + TypeScript + Element Plus + Tailwind CSS + Node.js 代理，实现喜茶杯贴上传工具，逻辑参考 [FuQuan233/HeyTea_AutoUpload](https://github.com/FuQuan233/HeyTea_AutoUpload)。
 
+## 在线体验
+
+如果只是想直接使用，可以访问 Vercel 托管的版本：<https://heytea-diy-toolkit.vercel.app>
+
 ## 功能概览
 
 - 手机号短信登录（Node 端转发喜茶接口）
