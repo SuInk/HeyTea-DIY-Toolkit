@@ -232,16 +232,15 @@
                         target="_blank"
                         rel="noreferrer"
                         class="ml-1 text-brand-300 underline decoration-dotted hover:text-brand-200"
-                      >赞赏
-                      </a>，谢谢支持 💛
+                      >赞赏</a
+                      >，谢谢支持 💛
                     </span>
-                    <div
-                      v-else-if="uploadState.details"
-                      class="mt-2 rounded border border-red-400/30 bg-slate-900/60 p-3 text-left"
+                    <span
+                      v-else-if="uploadState.type === 'error'"
+                      class="text-xs text-red-200"
                     >
-                      <p class="text-xs text-slate-400">喜茶返回：</p>
-                      <pre class="mt-1 text-xs text-red-100 whitespace-pre-wrap break-all">{{ uploadState.details }}</pre>
-                    </div>
+                      可能是触发了每日上传 10 张的限制，请稍后再试。
+                    </span>
                   </template>
                 </el-result>
               </div>
