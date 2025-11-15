@@ -15,7 +15,7 @@ function encryptHeyteaMobile(mobile) {
   return CryptoJS.enc.Base64.stringify(encrypted.ciphertext);
 }
 function timestampSign(userMainId, timestamp) {
-  const raw = `${SIGN_SALT}`;
+  const raw = `${SIGN_SALT}${userMainId}${timestamp}`;
   return CryptoJS.MD5(raw).toString();
 }
 function decryptResponseData(payload, isApp = false) {
