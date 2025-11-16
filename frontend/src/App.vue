@@ -25,7 +25,7 @@
             <span>GitHub</span>
           </a>
         </div>
-        <h1 class="text-3xl font-semibold">喜茶杯贴前端工作台</h1>
+        <h1 class="text-3xl font-semibold">喜茶杯贴工作台</h1>
       </header>
 
       <div class="grid gap-6 lg:grid-cols-5">
@@ -127,7 +127,7 @@
             </el-tabs>
 
             <div class="mt-2 flex items-center justify-between">
-              <label class="flex items-center gap-2 text-sm text-slate-100">
+              <label class="flex items-center gap-2 text-sm text-slate-400">
                 <el-switch v-model="rememberMe" size="small" /> 记住
                 Token（本地加密存储）
               </label>
@@ -192,7 +192,7 @@
                   >
                     <span class="text-xl">🖼️</span>
                     <p class="text-sm">
-                      先选择一张图片，系统会自动缩放到 596×832 并可选灰度
+                      先选择一张图片，系统会自动压缩并裁切到 596×832，也可用AI或其它工具处理后上传
                     </p>
                   </div>
                   <div
@@ -214,26 +214,23 @@
                   </div>
                 </div>
                 <div
-                  class="flex items-center justify-between text-xs text-slate-200"
+                  class="flex items-center justify-between text-xs text-slate-400"
                 >
                   <span
                     >当前文件：{{ processedFormatLabel }} ·
                     {{ processedSizeLabel }}</span
                   >
-                  <span :class="exceedsLimit ? 'text-red-400' : ''"
+                  <span
+                    :class="[
+                      'font-semibold',
+                      exceedsLimit ? 'text-red-500' : 'text-slate-400',
+                    ]"
                     >限制 ≤ {{ MAX_SIZE_KB }}KB</span
                   >
                 </div>
                 <p v-if="compressionHint" class="text-xs text-amber-300">
                   {{ compressionHint }}
                 </p>
-                <el-alert
-                  :closable="false"
-                  title="提示"
-                  type="info"
-                  description="可在黑白 / 灰度 / 原图模式间切换，并调整裁剪方式，确保宽高符合喜茶要求（596×832，小于 200KB）。"
-                  show-icon
-                />
               </div>
 
               <div class="space-y-4">
@@ -241,7 +238,9 @@
                   <el-form-item label="色彩模式">
                     <el-radio-group v-model="toneMode" size="small">
                       <el-radio-button label="binary">黑白</el-radio-button>
-                      <el-radio-button label="grayscale">灰度</el-radio-button>
+                      <el-radio-button label="sampled"
+                        >点阵</el-radio-button
+                      >
                       <el-radio-button label="original">原图</el-radio-button>
                     </el-radio-group>
                   </el-form-item>
@@ -254,8 +253,26 @@
                         :step="5"
                         show-stops
                       />
-                      <p class="mt-1 text-xs text-slate-200">
-                        阈值越高整体越亮（当前：{{ binaryThreshold }}）。
+                      <p class="mt-1 text-xs text-slate-400">
+                        高于阈值的像素会被转成黑色，当前：{{ binaryThreshold }}。
+                      </p>
+                    </div>
+                  </el-form-item>
+                  <el-form-item
+                    v-if="toneMode === 'sampled'"
+                    label="点阵像素"
+                  >
+                    <div class="w-full">
+                      <el-slider
+                        v-model="sampleDensity"
+                        :min="2"
+                        :max="16"
+                        :step="1"
+                      />
+                      <p class="mt-1 text-xs text-slate-400">
+                        数值越小点阵越细腻，不保证实际打印效果，当前：{{
+                          sampleDensity
+                        }}px。
                       </p>
                     </div>
                   </el-form-item>
@@ -347,9 +364,10 @@
               <div class="space-y-4">
                 <div>
                   <p class="font-semibold text-slate-900">
-                    1. 登录失败，提示“当前注册行为存在异常，请稍后再试或更换注册方式”。
+                    1.
+                    登录失败，提示“当前注册行为存在异常，请稍后再试或更换注册方式”。
                   </p>
-                  <p class="mt-1 text-slate-600">
+                  <p class="mt-1 text-slate-400">
                     确认手机号已经注册喜茶，并且能够正常登录喜茶 App / 小程序。
                   </p>
                 </div>
@@ -357,23 +375,24 @@
                   <p class="font-semibold text-slate-900">
                     2. 上传失败，提示“文件格式不允许上传”。
                   </p>
-                  <p class="mt-1 text-slate-600">
-                    请确保上传的原始文件为 PNG；JPG 会自动转换成 PNG，但不排除失败可能，可更换
-                    PNG 文件后重试。
+                  <p class="mt-1 text-slate-400">
+                    请确保上传的原始文件为 PNG；JPG 会自动转换成
+                    PNG，但不排除失败可能，可更换 PNG 文件后重试。
                   </p>
                 </div>
                 <div>
                   <p class="font-semibold text-slate-900">
                     3. 上传成功后小程序不显示
                   </p>
-                  <p class="mt-1 text-slate-600">
+                  <p class="mt-1 text-slate-400">
                     确认上传工具使用的账号和喜茶登录账号保持一致，随后刷新喜茶小程序。
                   </p>
                 </div>
                 <div>
                   <p class="font-semibold text-slate-900">4. 其他上传失败</p>
-                  <p class="mt-1 text-slate-600">
-                    确认今日内上传未超过 10张，并检查喜茶小程序是否能正常打开上传界面并制作喜贴。
+                  <p class="mt-1 text-slate-400">
+                    确认今日内上传未超过
+                    10张，并检查喜茶小程序是否能正常打开上传界面并制作喜贴。
                   </p>
                 </div>
               </div>
@@ -381,6 +400,18 @@
           </div>
         </div>
       </section>
+      <footer class="fixed bottom-5 left-0 w-full mt-10 text-center text-xs text-slate-500">
+        免责声明：本服务仅供测试使用，可在
+        <a
+          href="https://github.com/SuInk/HeyTea-DIY-Toolkit"
+          target="_blank"
+          rel="noreferrer"
+          class="text-brand-300 underline decoration-dotted hover:text-brand-200"
+        >
+          GitHub
+        </a>
+        克隆仓库自行搭建
+      </footer>
     </div>
   </div>
 </template>
@@ -510,6 +541,7 @@ const processedBlob = ref<Blob | null>(null);
 const toneMode = ref<ToneMode>("binary");
 const isDraggingFile = ref(false);
 const binaryThreshold = ref(170);
+const sampleDensity = ref(6);
 const fitMode = ref<"cover" | "contain">("cover");
 const forcePng = ref(true);
 const isRendering = ref(false);
@@ -743,7 +775,9 @@ async function renderPreview() {
   try {
     const blob = await renderToCupCanvas(canvasRef.value, workingImage.value, {
       toneMode: toneMode.value,
-      threshold: binaryThreshold.value,
+      threshold:
+        toneMode.value === "binary" ? binaryThreshold.value : undefined,
+      sampleDensity: sampleDensity.value,
       fit: fitMode.value,
       targetFormat: forcePng.value ? "png" : "auto",
       maxBytes: MAX_UPLOAD_BYTES,
@@ -827,7 +861,7 @@ function handleDownload() {
   URL.revokeObjectURL(url);
 }
 
-watch([toneMode, binaryThreshold, fitMode, forcePng], () => {
+watch([toneMode, binaryThreshold, sampleDensity, fitMode, forcePng], () => {
   if (workingImage.value) {
     renderPreview();
   }
@@ -881,8 +915,7 @@ function arrayBufferToWordArray(buffer: ArrayBuffer): CryptoJS.lib.WordArray {
   const bytes = new Uint8Array(buffer);
   const words: number[] = [];
   for (let i = 0; i < bytes.length; i += 1) {
-    words[i >>> 2] =
-      (words[i >>> 2] ?? 0) | (bytes[i] << (24 - (i & 3) * 8));
+    words[i >>> 2] = (words[i >>> 2] ?? 0) | (bytes[i] << (24 - (i & 3) * 8));
   }
   return CryptoJS.lib.WordArray.create(words, bytes.length);
 }

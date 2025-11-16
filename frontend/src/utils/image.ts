@@ -1,10 +1,11 @@
 import { CUP_HEIGHT, CUP_WIDTH, MAX_UPLOAD_BYTES } from '@/config/heytea';
 
-export type ToneMode = 'binary' | 'grayscale' | 'original';
+export type ToneMode = 'binary' | 'sampled' | 'original';
 
 export interface RenderOptions {
   toneMode: ToneMode;
   threshold?: number;
+  sampleDensity?: number;
   fit: 'contain' | 'cover';
   maxBytes?: number;
   targetFormat?: 'png' | 'auto';
@@ -66,8 +67,8 @@ export async function renderToCupCanvas(
       case 'binary':
         applyBinaryThreshold(imageData, options.threshold);
         break;
-      case 'grayscale':
-        applyGrayscale(imageData);
+      case 'sampled':
+        applySampledMonochrome(imageData, options.sampleDensity, options.threshold);
         break;
       default:
         applyBinaryThreshold(imageData, options.threshold);
@@ -170,12 +171,100 @@ function quantizeColors(data: Uint8ClampedArray, step: number) {
   }
 }
 
-function applyGrayscale(imageData: ImageData) {
-  const { data } = imageData;
-  for (let i = 0; i < data.length; i += 4) {
-    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-    data[i] = data[i + 1] = data[i + 2] = gray;
+function applySampledMonochrome(imageData: ImageData, density = 6, threshold = 170) {
+  const blockSize = Math.max(2, Math.min(32, Math.round(density)));
+  const limit = Math.max(0, Math.min(255, Math.round(threshold)));
+  const bias = (limit - 170) / 255;
+  const { data, width, height } = imageData;
+
+  // Down-sample blocks but fill them with a deterministic dot pattern to approximate 0-255 brightness via black/white pixels.
+  for (let y = 0; y < height; y += blockSize) {
+    const blockHeight = Math.min(blockSize, height - y);
+    for (let x = 0; x < width; x += blockSize) {
+      const blockWidth = Math.min(blockSize, width - x);
+      const pixelCount = blockWidth * blockHeight;
+      if (!pixelCount) {
+        continue;
+      }
+
+      let graySum = 0;
+      for (let offsetY = 0; offsetY < blockHeight; offsetY += 1) {
+        for (let offsetX = 0; offsetX < blockWidth; offsetX += 1) {
+          const idx = ((y + offsetY) * width + (x + offsetX)) * 4;
+          const gray = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+          graySum += gray;
+        }
+      }
+
+      const grayValue = graySum / pixelCount;
+      const normalized = clamp01(grayValue / 255 - bias);
+      const whitePixels = Math.round(normalized * pixelCount);
+      const pattern = getHalftonePattern(blockWidth, blockHeight);
+
+      for (let order = 0; order < pixelCount; order += 1) {
+        const localIndex = pattern[order];
+        const localX = localIndex % blockWidth;
+        const localY = Math.floor(localIndex / blockWidth);
+        const idx = ((y + localY) * width + (x + localX)) * 4;
+        const value = order < whitePixels ? 255 : 0;
+        data[idx] = value;
+        data[idx + 1] = value;
+        data[idx + 2] = value;
+      }
+    }
   }
+}
+
+function clamp01(value: number) {
+  if (value < 0) {
+    return 0;
+  }
+  if (value > 1) {
+    return 1;
+  }
+  return value;
+}
+
+const halftonePatternCache = new Map<string, Uint16Array>();
+
+function getHalftonePattern(width: number, height: number): Uint16Array {
+  const key = `${width}x${height}`;
+  const cached = halftonePatternCache.get(key);
+  if (cached) {
+    return cached;
+  }
+
+  type Entry = { index: number; distance: number; angle: number };
+  const entries: Entry[] = [];
+  const centerX = (width - 1) / 2;
+  const centerY = (height - 1) / 2;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const dx = x - centerX;
+      const dy = y - centerY;
+      entries.push({
+        index: y * width + x,
+        distance: dx * dx + dy * dy,
+        angle: Math.atan2(dy, dx),
+      });
+    }
+  }
+
+  entries.sort((a, b) => {
+    if (a.distance === b.distance) {
+      return a.angle - b.angle;
+    }
+    return a.distance - b.distance;
+  });
+
+  const pattern = new Uint16Array(entries.length);
+  entries.forEach((entry, idx) => {
+    pattern[idx] = entry.index;
+  });
+
+  halftonePatternCache.set(key, pattern);
+  return pattern;
 }
 
 function applyBinaryThreshold(imageData: ImageData, threshold = 170) {
