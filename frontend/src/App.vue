@@ -153,7 +153,7 @@
               <el-button type="primary" @click="triggerFileDialog"
                 >选择或拖入 PNG / JPG</el-button
               >
-              <span class="text-sm text-slate-100">{{
+              <span class="text-sm text-slate-400">{{
                 selectedFileLabel
               }}</span>
               <input
@@ -400,7 +400,7 @@
           </div>
         </div>
       </section>
-      <footer class="fixed bottom-5 left-0 w-full mt-10 text-center text-xs text-slate-500">
+      <footer class="bottom-5 left-0 w-full mt-10 text-center text-xs text-slate-500">
         免责声明：本服务仅供测试使用，可在
         <a
           href="https://github.com/SuInk/HeyTea-DIY-Toolkit"
@@ -926,14 +926,12 @@ function arrayBufferToHex(buffer: ArrayBuffer) {
     .join("");
 }
 
-type GlobalWithProcess = typeof globalThis & {
-  process?: { versions?: { node?: string } };
-};
+type PortableSubtle = Pick<SubtleCrypto, "digest">;
 
-let cachedSubtle: SubtleCrypto | null = null;
+let cachedSubtle: PortableSubtle | null = null;
 let subtleStatus: "unknown" | "available" | "unavailable" = "unknown";
 
-async function getSubtleCrypto(): Promise<SubtleCrypto | null> {
+async function getSubtleCrypto(): Promise<PortableSubtle | null> {
   if (subtleStatus !== "unknown") {
     return cachedSubtle;
   }
@@ -944,10 +942,9 @@ async function getSubtleCrypto(): Promise<SubtleCrypto | null> {
     subtleStatus = "available";
     return cachedSubtle;
   }
-  const globalProcess = (globalThis as GlobalWithProcess).process;
-  if (globalProcess?.versions?.node) {
+  if (import.meta.env.SSR) {
     try {
-      const nodeCrypto = await import("crypto");
+      const nodeCrypto = await import("node:crypto");
       if (nodeCrypto?.webcrypto?.subtle) {
         cachedSubtle = nodeCrypto.webcrypto.subtle;
         subtleStatus = "available";
