@@ -415,8 +415,24 @@ import {
 const GITHUB_URL = "https://github.com/SuInk/HeyTea-DIY-Toolkit";
 const STORAGE_KEY = "heytea-token";
 const DONATE_QR_URL = `${import.meta.env.BASE_URL}donate.jpg`;
-const LOGIN_ERROR_HINT =
-  "如提示“当前注册行为存在异常，请稍后再试或更换注册方式”，请前往喜茶 App / 小程序注册后再尝试登录。";
+const MESSAGE_DURATION = 7000;
+
+type ToastType = "success" | "error" | "warning" | "info";
+
+function showToast(type: ToastType, message: string) {
+  ElMessage({
+    type,
+    message,
+    duration: MESSAGE_DURATION,
+    showClose: true,
+    offset: 20,
+  });
+}
+
+const showSuccessMessage = (message: string) => showToast("success", message);
+const showErrorMessage = (message: string) => showToast("error", message);
+const showWarningMessage = (message: string) => showToast("warning", message);
+const showInfoMessage = (message: string) => showToast("info", message);
 
 type UploadState = {
   type: "success" | "warning" | "error";
@@ -551,7 +567,7 @@ function startCountdown() {
 
 async function handleSendCode(payload?: CaptchaPayload) {
   if (!/^1\d{10}$/.test(phone.value)) {
-    ElMessage.error("请输入有效的 11 位手机号");
+    showErrorMessage("请输入有效的 11 位手机号");
     return;
   }
 
@@ -572,10 +588,10 @@ async function handleSendCode(payload?: CaptchaPayload) {
     }
 
     startCountdown();
-    ElMessage.success("验证码已发送");
+    showSuccessMessage("验证码已发送");
   } catch (error) {
     const message = getErrorMessage(error, "发送失败");
-    ElMessage.error(message);
+    showErrorMessage(message);
   } finally {
     if (!payload) {
       isSendingCode.value = false;
@@ -601,11 +617,11 @@ async function bindToken(token: string) {
 
 async function handleSmsLogin() {
   if (!/^1\d{10}$/.test(phone.value)) {
-    ElMessage.error("请输入正确的手机号");
+    showErrorMessage("请输入正确的手机号");
     return;
   }
   if (!/^\d{4,6}$/.test(smsCode.value)) {
-    ElMessage.error("请输入收到的验证码");
+    showErrorMessage("请输入收到的验证码");
     return;
   }
 
@@ -613,10 +629,10 @@ async function handleSmsLogin() {
   try {
     const token = await loginWithSms(phone.value, smsCode.value);
     await bindToken(token);
-    ElMessage.success("登录成功");
+    showSuccessMessage("登录成功");
   } catch (error) {
     const message = getErrorMessage(error, "登录失败");
-    ElMessage.error(`${message} ${LOGIN_ERROR_HINT}`);
+    showErrorMessage(`${message}`);
   } finally {
     isLoggingIn.value = false;
   }
@@ -625,17 +641,17 @@ async function handleSmsLogin() {
 async function handleTokenLogin() {
   const token = manualToken.value.trim();
   if (!token) {
-    ElMessage.error("请输入有效的 Token");
+    showErrorMessage("请输入有效的 Token");
     return;
   }
   isLoggingIn.value = true;
   try {
     await bindToken(token);
-    ElMessage.success("Token 登录成功");
+    showSuccessMessage("Token 登录成功");
   } catch (error) {
     manualToken.value = token;
     const message = getErrorMessage(error, "Token 登录失败");
-    ElMessage.error(message);
+    showErrorMessage(message);
   } finally {
     isLoggingIn.value = false;
   }
@@ -658,7 +674,7 @@ function clearAuth(showToast = true) {
   lastUploadHash.value = null;
   localStorage.removeItem(STORAGE_KEY);
   if (showToast) {
-    ElMessage.success("已退出登录");
+    showSuccessMessage("已退出登录");
   }
 }
 
@@ -677,7 +693,7 @@ async function handleFile(file: File) {
     await renderPreview();
   } catch (error) {
     const message = getErrorMessage(error, "图片处理失败");
-    ElMessage.error(message);
+    showErrorMessage(message);
   }
 }
 
@@ -735,14 +751,14 @@ async function renderPreview() {
     processedBlob.value = blob;
     if (forcePng.value && blob.type !== "image/png") {
       compressionHint.value = `PNG 超出 ${MAX_SIZE_KB}KB，已自动压缩为 JPG。`;
-      ElMessage.warning(compressionHint.value);
+      showWarningMessage(compressionHint.value);
     } else {
       compressionHint.value = "";
     }
     uploadState.value = null;
   } catch (error) {
     const message = getErrorMessage(error, "渲染失败");
-    ElMessage.error(message);
+    showErrorMessage(message);
   } finally {
     isRendering.value = false;
   }
@@ -750,7 +766,7 @@ async function renderPreview() {
 
 async function handleUpload() {
   if (!authToken.value || !user.value || !processedBlob.value) {
-    ElMessage.error("请先登录并准备好图片");
+    showErrorMessage("请先登录并准备好图片");
     return;
   }
   isUploading.value = true;
@@ -769,7 +785,7 @@ async function handleUpload() {
           }
         );
       } catch {
-        ElMessage.info("已取消重复上传");
+        showInfoMessage("已取消重复上传");
         isUploading.value = false;
         return;
       }
@@ -783,7 +799,7 @@ async function handleUpload() {
     });
     uploadState.value = { type: "success", message: "上传成功 🎉" };
     lastUploadHash.value = currentHash;
-    ElMessage.success("杯贴上传成功");
+    showSuccessMessage("杯贴上传成功");
   } catch (error) {
     const message = getErrorMessage(error, "上传失败");
     const details = isAxiosError(error)
@@ -795,7 +811,7 @@ async function handleUpload() {
       console.error("HeyTea upload failed:", details);
     }
     uploadState.value = nextState;
-    ElMessage.error(message);
+    showErrorMessage(message);
   } finally {
     isUploading.value = false;
   }
@@ -829,7 +845,7 @@ if (authToken.value) {
   manualToken.value = authToken.value;
   resolveUserProfile().catch((error) => {
     const message = getErrorMessage(error, "获取用户信息失败");
-    ElMessage.error(message);
+    showErrorMessage(message);
     clearAuth(false);
   });
 }
