@@ -1,11 +1,12 @@
-# HeyTea Cup Sticker
+# HeyTea-DIY-Toolkit
 
 Vue 3 + TypeScript + Element Plus + Tailwind CSS + Node.js 代理，实现喜茶杯贴上传工具，逻辑参考 [FuQuan233/HeyTea_AutoUpload](https://github.com/FuQuan233/HeyTea_AutoUpload)。
 
 ## 在线体验
 
-如果只是想直接使用，可以访问 Vercel 托管的版本：<https://heytea-diy-toolkit.vercel.app>
-或国内加速版本<https://heytea.suink.cn>
+如果只是想直接使用，可以访问 
+1. Vercel 托管的版本：<https://heytea-diy-toolkit.vercel.app> 
+2. 国内加速版本<https://heytea.suink.cn>
 ## 功能概览
 
 - 手机号短信登录（Node 端转发喜茶接口）
@@ -48,3 +49,4 @@ server/    # Express 代理层
 ```
 
 开发环境下，`frontend/.env.development` 默认指向 `http://localhost:8787`。如需自定义，修改该文件或通过环境变量覆盖 `VITE_API_BASE`。
+

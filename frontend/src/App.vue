@@ -3,7 +3,9 @@
     <div class="mx-auto max-w-6xl px-4 py-10">
       <header class="flex flex-col gap-2 pb-8">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <p class="text-sm uppercase tracking-widest text-brand-300">HeyTea DIY Toolkit</p>
+          <p class="text-sm uppercase tracking-widest text-brand-300">
+            HeyTea DIY Toolkit
+          </p>
           <a
             :href="GITHUB_URL"
             class="flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-slate-100 transition hover:border-white/60 hover:bg-white/10"
@@ -28,23 +30,27 @@
 
       <div class="grid gap-6 lg:grid-cols-5">
         <section class="lg:col-span-2">
-          <el-card body-style="{padding: '1.5rem'}" shadow="hover" class="space-y-4">
+          <el-card
+            body-style="{padding: '1.5rem'}"
+            shadow="hover"
+            class="space-y-4"
+          >
             <div
               :class="[
                 'rounded-xl border p-4 text-sm',
                 user
                   ? 'border-green-400/70 bg-green-400/20 text-green'
-                  : 'text-green/10 bg-slate-900/40 text-slate-200'
+                  : 'text-green/10 bg-slate-900/40 text-slate-100',
               ]"
             >
               <p
                 class="text-xs uppercase tracking-widest"
-                :class="user ? 'text-green/90' : 'text-slate-400'"
+                :class="user ? 'text-green/90' : 'text-slate-200'"
               >
                 当前状态
               </p>
               <p class="text-2xl font-semibold mt-1 text-green">
-                {{ user ? `已登录 ${user.name}` : '未登录' }}
+                {{ user ? `已登录 ${user.name}` : "未登录" }}
               </p>
               <p v-if="user" class="text-sm mt-1 text-green">
                 ID: {{ user.user_main_id }}
@@ -56,22 +62,34 @@
                 <template v-if="!user">
                   <el-form label-position="top" class="space-y-4">
                     <el-form-item label="手机号 (仅支持国内 11 位)">
-                      <el-input v-model="phone" maxlength="11" placeholder="例：13800000000" />
+                      <el-input
+                        v-model="phone"
+                        maxlength="11"
+                        placeholder="例：13800000000"
+                      />
                     </el-form-item>
                     <el-form-item label="短信验证码">
                       <div class="flex gap-2">
-                        <el-input v-model="smsCode" maxlength="6" placeholder="6 位数字" />
+                        <el-input
+                          v-model="smsCode"
+                          maxlength="6"
+                          placeholder="6 位数字"
+                        />
                         <el-button
                           type="primary"
                           :loading="isSendingCode"
                           :disabled="isSendingCode || countdown > 0"
                           @click="handleSendCode"
                         >
-                          {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+                          {{ countdown > 0 ? `${countdown}s` : "获取验证码" }}
                         </el-button>
                       </div>
                     </el-form-item>
-                    <el-button type="primary" :loading="isLoggingIn" @click="handleSmsLogin">
+                    <el-button
+                      type="primary"
+                      :loading="isLoggingIn"
+                      @click="handleSmsLogin"
+                    >
                       使用短信登录
                     </el-button>
                   </el-form>
@@ -97,7 +115,11 @@
                       placeholder="粘贴已有 Token"
                     />
                   </el-form-item>
-                  <el-button type="primary" :loading="isLoggingIn" @click="handleTokenLogin">
+                  <el-button
+                    type="primary"
+                    :loading="isLoggingIn"
+                    @click="handleTokenLogin"
+                  >
                     使用 Token 登录
                   </el-button>
                 </el-form>
@@ -105,10 +127,16 @@
             </el-tabs>
 
             <div class="mt-2 flex items-center justify-between">
-              <label class="flex items-center gap-2 text-sm text-slate-300">
-                <el-switch v-model="rememberMe" size="small" /> 记住 Token（本地加密存储）
+              <label class="flex items-center gap-2 text-sm text-slate-100">
+                <el-switch v-model="rememberMe" size="small" /> 记住
+                Token（本地加密存储）
               </label>
-              <el-button link type="danger" @click="clearAuth" :disabled="!authToken">
+              <el-button
+                link
+                type="danger"
+                @click="clearAuth"
+                :disabled="!authToken"
+              >
                 退出登录
               </el-button>
             </div>
@@ -116,10 +144,18 @@
         </section>
 
         <section class="lg:col-span-3">
-          <el-card body-style="{padding: '1.5rem'}" shadow="hover" class="space-y-6">
+          <el-card
+            body-style="{padding: '1.5rem'}"
+            shadow="hover"
+            class="space-y-6"
+          >
             <div class="flex flex-wrap items-center gap-3">
-              <el-button type="primary" @click="triggerFileDialog">选择或拖入 PNG / JPG</el-button>
-              <span class="text-sm text-slate-300">{{ selectedFileLabel }}</span>
+              <el-button type="primary" @click="triggerFileDialog"
+                >选择或拖入 PNG / JPG</el-button
+              >
+              <span class="text-sm text-slate-100">{{
+                selectedFileLabel
+              }}</span>
               <input
                 ref="fileInputRef"
                 type="file"
@@ -132,7 +168,9 @@
             <div class="grid gap-4 lg:grid-cols-2">
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                  <h3 class="text-lg font-semibold">杯贴效果 {{ CUP_WIDTH }}×{{ CUP_HEIGHT }} px</h3>
+                  <h3 class="text-lg font-semibold">
+                    杯贴效果 {{ CUP_WIDTH }}×{{ CUP_HEIGHT }} px
+                  </h3>
                   <el-tag size="small" effect="dark">@2:3 比例</el-tag>
                 </div>
                 <div
@@ -150,32 +188,45 @@
                   />
                   <div
                     v-if="!hasPreview"
-                    class="flex h-[420px] flex-col items-center justify-center gap-2 text-slate-400"
+                    class="flex h-[420px] flex-col items-center justify-center gap-2 text-slate-200"
                   >
                     <span class="text-xl">🖼️</span>
-                    <p class="text-sm">先选择一张图片，系统会自动缩放到 596×832 并可选灰度</p>
+                    <p class="text-sm">
+                      先选择一张图片，系统会自动缩放到 596×832 并可选灰度
+                    </p>
                   </div>
                   <div
                     v-if="isRendering"
-                    class="absolute inset-3 rounded-lg bg-black/60 backdrop-blur-sm"
+                    class="absolute inset-3 rounded-lg bg-black/60 backdrop-blur-sm text-slate-50"
                   >
-                    <div class="flex h-full items-center justify-center text-sm text-slate-200">
+                    <div
+                      class="flex h-full items-center justify-center text-sm text-slate-50"
+                    >
                       正在处理图片…
                     </div>
                   </div>
                   <div
                     v-if="isDraggingFile"
-                    class="absolute inset-3 flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-brand-300 bg-black/70 text-center text-sm text-slate-200 backdrop-blur"
+                    class="absolute inset-3 flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-brand-300 bg-black/70 text-center text-sm text-slate-50 backdrop-blur"
                   >
                     <span class="text-xl">📥</span>
                     <p>松开即可上传图片</p>
                   </div>
                 </div>
-                <div class="flex items-center justify-between text-xs text-slate-400">
-                  <span>当前文件：{{ processedFormatLabel }} · {{ processedSizeLabel }}</span>
-                  <span :class="exceedsLimit ? 'text-red-400' : ''">限制 ≤ {{ MAX_SIZE_KB }}KB</span>
+                <div
+                  class="flex items-center justify-between text-xs text-slate-200"
+                >
+                  <span
+                    >当前文件：{{ processedFormatLabel }} ·
+                    {{ processedSizeLabel }}</span
+                  >
+                  <span :class="exceedsLimit ? 'text-red-400' : ''"
+                    >限制 ≤ {{ MAX_SIZE_KB }}KB</span
+                  >
                 </div>
-                <p v-if="compressionHint" class="text-xs text-amber-300">{{ compressionHint }}</p>
+                <p v-if="compressionHint" class="text-xs text-amber-300">
+                  {{ compressionHint }}
+                </p>
                 <el-alert
                   :closable="false"
                   title="提示"
@@ -187,33 +238,42 @@
 
               <div class="space-y-4">
                 <el-form label-width="110px" class="text-slate-900">
-                <el-form-item label="色彩模式">
-                  <el-radio-group v-model="toneMode" size="small">
-                    <el-radio-button label="binary">黑白</el-radio-button>
-                    <el-radio-button label="grayscale">灰度</el-radio-button>
-                    <el-radio-button label="original">原图</el-radio-button>
-                  </el-radio-group>
-                </el-form-item>
-                <el-form-item v-if="toneMode === 'binary'" label="黑白阈值">
-                  <div class="w-full">
-                    <el-slider v-model="binaryThreshold" :min="60" :max="220" :step="5" show-stops />
-                    <p class="mt-1 text-xs text-slate-400">
-                      阈值越高整体越亮（当前：{{ binaryThreshold }}）。
-                    </p>
-                  </div>
-                </el-form-item>
-                <el-form-item label="缩放策略">
-                  <el-select v-model="fitMode" placeholder="选择适配方式">
-                    <el-option label="填满画布（裁切边缘）" value="cover" />
-                    <el-option label="完整保留（留空白）" value="contain" />
-                  </el-select>
-                </el-form-item>
-                <el-form-item label="强制输出 PNG">
-                  <el-switch v-model="forcePng" />
-                </el-form-item>
-                <el-form-item label="文件名">
-                  <el-input v-model="downloadName" placeholder="上传时使用的文件名" />
-                </el-form-item>
+                  <el-form-item label="色彩模式">
+                    <el-radio-group v-model="toneMode" size="small">
+                      <el-radio-button label="binary">黑白</el-radio-button>
+                      <el-radio-button label="grayscale">灰度</el-radio-button>
+                      <el-radio-button label="original">原图</el-radio-button>
+                    </el-radio-group>
+                  </el-form-item>
+                  <el-form-item v-if="toneMode === 'binary'" label="黑白阈值">
+                    <div class="w-full">
+                      <el-slider
+                        v-model="binaryThreshold"
+                        :min="60"
+                        :max="220"
+                        :step="5"
+                        show-stops
+                      />
+                      <p class="mt-1 text-xs text-slate-200">
+                        阈值越高整体越亮（当前：{{ binaryThreshold }}）。
+                      </p>
+                    </div>
+                  </el-form-item>
+                  <el-form-item label="缩放策略">
+                    <el-select v-model="fitMode" placeholder="选择适配方式">
+                      <el-option label="填满画布（裁切边缘）" value="cover" />
+                      <el-option label="完整保留（留空白）" value="contain" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="强制输出 PNG">
+                    <el-switch v-model="forcePng" />
+                  </el-form-item>
+                  <el-form-item label="文件名">
+                    <el-input
+                      v-model="downloadName"
+                      placeholder="上传时使用的文件名"
+                    />
+                  </el-form-item>
                 </el-form>
 
                 <div class="flex flex-wrap gap-3">
@@ -225,10 +285,7 @@
                   >
                     上传杯贴
                   </el-button>
-                  <el-button
-                    :disabled="!hasPreview"
-                    @click="handleDownload"
-                  >
+                  <el-button :disabled="!hasPreview" @click="handleDownload">
                     下载 PNG
                   </el-button>
                   <el-button
@@ -249,7 +306,7 @@
                   <template #sub-title>
                     <span
                       v-if="uploadState.type === 'success'"
-                      class="text-xs text-slate-400"
+                      class="text-xs text-slate-200"
                     >
                       如果工具对你有帮助，欢迎
                       <a
@@ -257,12 +314,12 @@
                         target="_blank"
                         rel="noreferrer"
                         class="ml-1 text-brand-300 underline decoration-dotted hover:text-brand-200"
-                      >赞赏</a
+                        >赞赏</a
                       >，谢谢支持 💛
                     </span>
                     <span
                       v-else-if="uploadState.type === 'error'"
-                      class="text-xs text-red-200"
+                      class="text-xs text-red-100"
                     >
                       可能是触发了每日上传 10 张的限制，请稍后再试。
                     </span>
@@ -273,18 +330,99 @@
           </el-card>
         </section>
       </div>
+
+      <section class="mt-6">
+        <details
+          class="group rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-900"
+        >
+          <summary
+            class="flex cursor-pointer items-center justify-between text-base font-semibold text-slate-100"
+          >
+            <span>常见问题 & 联系方式</span>
+            <span class="text-xs font-normal text-slate-500 group-open:hidden"
+              >点击展开</span
+            >
+            <span
+              class="text-xs font-normal text-slate-500 hidden group-open:inline"
+              >点击收起</span
+            >
+          </summary>
+          <div class="mt-4 space-y-3 text-sm text-slate-700">
+            <article
+              class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+            >
+              <p class="font-semibold text-slate-900">1. 登录失败</p>
+              <p class="mt-1 text-slate-700">
+                提示“当前注册行为存在异常，请稍后再试或更换注册方式”。
+              </p>
+              <p class="mt-1 text-slate-600">
+                确认手机号已经注册喜茶，并且能够正常登录喜茶 App / 小程序。
+              </p>
+            </article>
+            <article
+              class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+            >
+              <p class="font-semibold text-slate-900">2. 上传失败</p>
+              <p class="mt-1 text-slate-700">提示“文件格式不允许上传”。</p>
+              <p class="mt-1 text-slate-600">
+                请确保上传的原始文件为 PNG；JPG 会自动转换成
+                PNG，但偶尔会失败，可更换 PNG 文件后重试。
+              </p>
+            </article>
+            <article
+              class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+            >
+              <p class="font-semibold text-slate-900">
+                3. 上传成功后小程序不显示
+              </p>
+              <p class="mt-1 text-slate-600">
+                确认上传工具使用的账号和喜茶登录账号保持一致，随后刷新喜茶小程序。
+              </p>
+            </article>
+            <article
+              class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+            >
+              <p class="font-semibold text-slate-900">4. 其他上传失败</p>
+              <p class="mt-1 text-slate-600">
+                确认今日内上传未超过 10
+                张，并检查喜茶小程序是否能正常打开上传界面并制作喜贴。
+              </p>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <p class="mt-4 text-xs text-slate-500">
+        如需联系作者可邮箱
+        <a
+          href="mailto:leisurenot#outlook.com"
+          class="text-brand-200 underline decoration-dotted"
+        >
+          leisurenot@outlook.com
+        </a>
+        。日常使用或操作疑问请先参考常见问题，感谢理解。
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { isAxiosError } from 'axios';
+import { computed, onUnmounted, ref, watch } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { isAxiosError } from "axios";
 
-import { CAPTCHA_APP_ID, CUP_HEIGHT, CUP_WIDTH, MAX_UPLOAD_BYTES } from '@/config/heytea';
-import { requestCaptcha } from '@/utils/captcha';
-import { readFileAsImage, renderToCupCanvas, type ToneMode } from '@/utils/image';
+import {
+  CAPTCHA_APP_ID,
+  CUP_HEIGHT,
+  CUP_WIDTH,
+  MAX_UPLOAD_BYTES,
+} from "@/config/heytea";
+import { requestCaptcha } from "@/utils/captcha";
+import {
+  readFileAsImage,
+  renderToCupCanvas,
+  type ToneMode,
+} from "@/utils/image";
 import {
   fetchUserInfo,
   loginWithSms,
@@ -292,14 +430,14 @@ import {
   uploadCupSticker,
   type CaptchaPayload,
   type HeyTeaUser,
-} from '@/services/heytea';
+} from "@/services/heytea";
 
-const GITHUB_URL = 'https://github.com/SuInk/HeyTea-DIY-Toolkit';
-const STORAGE_KEY = 'heytea-token';
+const GITHUB_URL = "https://github.com/SuInk/HeyTea-DIY-Toolkit";
+const STORAGE_KEY = "heytea-token";
 const DONATE_QR_URL = `${import.meta.env.BASE_URL}donate.jpg`;
 
 type UploadState = {
-  type: 'success' | 'warning' | 'error';
+  type: "success" | "warning" | "error";
   message: string;
   details?: string;
 };
@@ -308,14 +446,14 @@ function extractServerMessage(payload: unknown): string | null {
   if (!payload) {
     return null;
   }
-  if (typeof payload === 'string') {
+  if (typeof payload === "string") {
     return payload;
   }
-  if (typeof payload === 'object') {
+  if (typeof payload === "object") {
     const record = payload as Record<string, unknown>;
-    for (const key of ['message', 'msg', 'error']) {
+    for (const key of ["message", "msg", "error"]) {
       const value = record[key];
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         return value;
       }
     }
@@ -333,7 +471,7 @@ function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) {
     return error.message;
   }
-  if (typeof error === 'string') {
+  if (typeof error === "string") {
     return error;
   }
   return fallback;
@@ -343,7 +481,7 @@ function formatServerPayload(payload: unknown): string | null {
   if (payload === null || payload === undefined) {
     return null;
   }
-  if (typeof payload === 'string') {
+  if (typeof payload === "string") {
     return payload;
   }
   try {
@@ -353,10 +491,10 @@ function formatServerPayload(payload: unknown): string | null {
   }
 }
 
-const activeTab = ref<'sms' | 'token'>('sms');
-const phone = ref('');
-const smsCode = ref('');
-const manualToken = ref('');
+const activeTab = ref<"sms" | "token">("sms");
+const phone = ref("");
+const smsCode = ref("");
+const manualToken = ref("");
 const rememberMe = ref(true);
 const authToken = ref<string | null>(localStorage.getItem(STORAGE_KEY));
 const user = ref<HeyTeaUser | null>(null);
@@ -371,32 +509,40 @@ const canvasRef = ref<HTMLCanvasElement>();
 
 const workingImage = ref<HTMLImageElement | null>(null);
 const processedBlob = ref<Blob | null>(null);
-const toneMode = ref<ToneMode>('binary');
+const toneMode = ref<ToneMode>("binary");
 const isDraggingFile = ref(false);
 const binaryThreshold = ref(170);
-const fitMode = ref<'cover' | 'contain'>('cover');
+const fitMode = ref<"cover" | "contain">("cover");
 const forcePng = ref(true);
 const isRendering = ref(false);
-const downloadName = ref('target.png');
+const downloadName = ref("target.png");
 const selectedFileLabel = computed(() =>
   processedBlob.value
     ? buildFilename(downloadName.value, processedBlob.value)
-    : downloadName.value || '未选择文件'
+    : downloadName.value || "未选择文件"
 );
 const uploadState = ref<UploadState | null>(null);
 const isUploading = ref(false);
-const compressionHint = ref('');
+const compressionHint = ref("");
 const lastUploadHash = ref<string | null>(null);
 
 const hasPreview = computed(() => Boolean(processedBlob.value));
 const canUpload = computed(
-  () => !!(authToken.value && user.value && processedBlob.value) && !isUploading.value
+  () =>
+    !!(authToken.value && user.value && processedBlob.value) &&
+    !isUploading.value
 );
 const processedSizeLabel = computed(() =>
-  processedBlob.value ? `${(processedBlob.value.size / 1024).toFixed(1)} KB` : '--'
+  processedBlob.value
+    ? `${(processedBlob.value.size / 1024).toFixed(1)} KB`
+    : "--"
 );
 const processedFormatLabel = computed(() =>
-  processedBlob.value ? (processedBlob.value.type === 'image/jpeg' ? 'JPG' : 'PNG') : '--'
+  processedBlob.value
+    ? processedBlob.value.type === "image/jpeg"
+      ? "JPG"
+      : "PNG"
+    : "--"
 );
 const exceedsLimit = computed(
   () => (processedBlob.value?.size ?? 0) > MAX_UPLOAD_BYTES
@@ -423,7 +569,7 @@ function startCountdown() {
 
 async function handleSendCode(payload?: CaptchaPayload) {
   if (!/^1\d{10}$/.test(phone.value)) {
-    ElMessage.error('请输入有效的 11 位手机号');
+    ElMessage.error("请输入有效的 11 位手机号");
     return;
   }
 
@@ -436,14 +582,17 @@ async function handleSendCode(payload?: CaptchaPayload) {
     if (result.requiresCaptcha) {
       isSendingCode.value = false;
       const captcha = await requestCaptcha(CAPTCHA_APP_ID);
-      await handleSendCode({ ticket: captcha.ticket, randstr: captcha.randstr });
+      await handleSendCode({
+        ticket: captcha.ticket,
+        randstr: captcha.randstr,
+      });
       return;
     }
 
     startCountdown();
-    ElMessage.success('验证码已发送');
+    ElMessage.success("验证码已发送");
   } catch (error) {
-    const message = getErrorMessage(error, '发送失败');
+    const message = getErrorMessage(error, "发送失败");
     ElMessage.error(message);
   } finally {
     if (!payload) {
@@ -457,17 +606,24 @@ async function bindToken(token: string) {
   manualToken.value = token;
   if (rememberMe.value) {
     localStorage.setItem(STORAGE_KEY, token);
+  } else {
+    localStorage.removeItem(STORAGE_KEY);
   }
-  await resolveUserProfile();
+  try {
+    await resolveUserProfile();
+  } catch (error) {
+    clearAuth(false);
+    throw error;
+  }
 }
 
 async function handleSmsLogin() {
   if (!/^1\d{10}$/.test(phone.value)) {
-    ElMessage.error('请输入正确的手机号');
+    ElMessage.error("请输入正确的手机号");
     return;
   }
   if (!/^\d{4,6}$/.test(smsCode.value)) {
-    ElMessage.error('请输入收到的验证码');
+    ElMessage.error("请输入收到的验证码");
     return;
   }
 
@@ -475,9 +631,9 @@ async function handleSmsLogin() {
   try {
     const token = await loginWithSms(phone.value, smsCode.value);
     await bindToken(token);
-    ElMessage.success('登录成功');
+    ElMessage.success("登录成功");
   } catch (error) {
-    const message = getErrorMessage(error, '登录失败');
+    const message = getErrorMessage(error, "登录失败");
     ElMessage.error(message);
   } finally {
     isLoggingIn.value = false;
@@ -485,18 +641,19 @@ async function handleSmsLogin() {
 }
 
 async function handleTokenLogin() {
-  if (!manualToken.value.trim()) {
-    ElMessage.error('请输入有效的 Token');
+  const token = manualToken.value.trim();
+  if (!token) {
+    ElMessage.error("请输入有效的 Token");
     return;
   }
   isLoggingIn.value = true;
   try {
-    await bindToken(manualToken.value.trim());
-    ElMessage.success('Token 登录成功');
+    await bindToken(token);
+    ElMessage.success("Token 登录成功");
   } catch (error) {
-    const message = getErrorMessage(error, '登录失败');
+    manualToken.value = token;
+    const message = getErrorMessage(error, "Token 登录失败");
     ElMessage.error(message);
-    authToken.value = null;
   } finally {
     isLoggingIn.value = false;
   }
@@ -504,27 +661,22 @@ async function handleTokenLogin() {
 
 async function resolveUserProfile() {
   if (!authToken.value) {
-    return;
+    throw new Error("Token 不存在");
   }
-  try {
-    const info = await fetchUserInfo(authToken.value);
-    user.value = info;
-  } catch (error) {
-    const message = getErrorMessage(error, '获取用户信息失败');
-    ElMessage.error(message);
-    clearAuth(false);
-  }
+  const info = await fetchUserInfo(authToken.value);
+  user.value = info;
+  return info;
 }
 
 function clearAuth(showToast = true) {
   authToken.value = null;
-  manualToken.value = '';
+  manualToken.value = "";
   user.value = null;
   uploadState.value = null;
   lastUploadHash.value = null;
   localStorage.removeItem(STORAGE_KEY);
   if (showToast) {
-    ElMessage.success('已退出登录');
+    ElMessage.success("已退出登录");
   }
 }
 
@@ -532,23 +684,23 @@ async function onFileInput(event: Event) {
   const files = (event.target as HTMLInputElement).files;
   if (!files?.length) return;
   await handleFile(files[0]);
-  (event.target as HTMLInputElement).value = '';
+  (event.target as HTMLInputElement).value = "";
 }
 
 async function handleFile(file: File) {
   try {
     const image = await readFileAsImage(file);
     workingImage.value = image;
-    downloadName.value = file.name.replace(/\.[^.]+$/, '') + '.png';
+    downloadName.value = file.name.replace(/\.[^.]+$/, "") + ".png";
     await renderPreview();
   } catch (error) {
-    const message = getErrorMessage(error, '图片处理失败');
+    const message = getErrorMessage(error, "图片处理失败");
     ElMessage.error(message);
   }
 }
 
 function hasFilePayload(event: DragEvent) {
-  return Array.from(event.dataTransfer?.types ?? []).includes('Files');
+  return Array.from(event.dataTransfer?.types ?? []).includes("Files");
 }
 
 function handleDragEnter(event: DragEvent) {
@@ -561,7 +713,7 @@ function handleDragOver(event: DragEvent) {
   if (!hasFilePayload(event)) {
     return;
   }
-  event.dataTransfer!.dropEffect = 'copy';
+  event.dataTransfer!.dropEffect = "copy";
   isDraggingFile.value = true;
 }
 
@@ -595,19 +747,19 @@ async function renderPreview() {
       toneMode: toneMode.value,
       threshold: binaryThreshold.value,
       fit: fitMode.value,
-      targetFormat: forcePng.value ? 'png' : 'auto',
+      targetFormat: forcePng.value ? "png" : "auto",
       maxBytes: MAX_UPLOAD_BYTES,
     });
     processedBlob.value = blob;
-    if (forcePng.value && blob.type !== 'image/png') {
+    if (forcePng.value && blob.type !== "image/png") {
       compressionHint.value = `PNG 超出 ${MAX_SIZE_KB}KB，已自动压缩为 JPG。`;
       ElMessage.warning(compressionHint.value);
     } else {
-      compressionHint.value = '';
+      compressionHint.value = "";
     }
     uploadState.value = null;
   } catch (error) {
-    const message = getErrorMessage(error, '渲染失败');
+    const message = getErrorMessage(error, "渲染失败");
     ElMessage.error(message);
   } finally {
     isRendering.value = false;
@@ -616,7 +768,7 @@ async function renderPreview() {
 
 async function handleUpload() {
   if (!authToken.value || !user.value || !processedBlob.value) {
-    ElMessage.error('请先登录并准备好图片');
+    ElMessage.error("请先登录并准备好图片");
     return;
   }
   isUploading.value = true;
@@ -626,16 +778,16 @@ async function handleUpload() {
     if (lastUploadHash.value && lastUploadHash.value === currentHash) {
       try {
         await ElMessageBox.confirm(
-          '检测到你刚刚上传过相同的图片，是否继续？',
-          '重复上传提醒',
+          "检测到你刚刚上传过相同的图片，是否继续？",
+          "重复上传提醒",
           {
-            confirmButtonText: '继续上传',
-            cancelButtonText: '取消',
-            type: 'warning',
+            confirmButtonText: "继续上传",
+            cancelButtonText: "取消",
+            type: "warning",
           }
         );
       } catch {
-        ElMessage.info('已取消重复上传');
+        ElMessage.info("已取消重复上传");
         isUploading.value = false;
         return;
       }
@@ -647,16 +799,18 @@ async function handleUpload() {
       blob: processedBlob.value,
       filename: buildFilename(downloadName.value, processedBlob.value),
     });
-    uploadState.value = { type: 'success', message: '上传成功 🎉' };
+    uploadState.value = { type: "success", message: "上传成功 🎉" };
     lastUploadHash.value = currentHash;
-    ElMessage.success('杯贴上传成功');
+    ElMessage.success("杯贴上传成功");
   } catch (error) {
-    const message = getErrorMessage(error, '上传失败');
-    const details = isAxiosError(error) ? formatServerPayload(error.response?.data) : null;
-    const nextState: UploadState = { type: 'error', message };
+    const message = getErrorMessage(error, "上传失败");
+    const details = isAxiosError(error)
+      ? formatServerPayload(error.response?.data)
+      : null;
+    const nextState: UploadState = { type: "error", message };
     if (details) {
       nextState.details = details;
-      console.error('HeyTea upload failed:', details);
+      console.error("HeyTea upload failed:", details);
     }
     uploadState.value = nextState;
     ElMessage.error(message);
@@ -667,7 +821,7 @@ async function handleUpload() {
 
 function handleDownload() {
   if (!processedBlob.value) return;
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   const url = URL.createObjectURL(processedBlob.value);
   link.href = url;
   link.download = buildFilename(downloadName.value, processedBlob.value);
@@ -691,7 +845,11 @@ watch(rememberMe, (next) => {
 
 if (authToken.value) {
   manualToken.value = authToken.value;
-  resolveUserProfile();
+  resolveUserProfile().catch((error) => {
+    const message = getErrorMessage(error, "获取用户信息失败");
+    ElMessage.error(message);
+    clearAuth(false);
+  });
 }
 
 onUnmounted(() => {
@@ -701,18 +859,18 @@ onUnmounted(() => {
 });
 
 function buildFilename(base: string, blob?: Blob | null) {
-  const cleanBase = base ? base.replace(/\.[^.]+$/, '') : 'cup';
-  const ext = blob?.type === 'image/jpeg' ? '.jpg' : '.png';
+  const cleanBase = base ? base.replace(/\.[^.]+$/, "") : "cup";
+  const ext = blob?.type === "image/jpeg" ? ".jpg" : ".png";
   return `${cleanBase}${ext}`;
 }
 
 async function hashBlob(blob: Blob): Promise<string> {
   const buffer = await blob.arrayBuffer();
   const subtle = await getSubtleCrypto();
-  const digest = await subtle.digest('SHA-1', buffer);
+  const digest = await subtle.digest("SHA-1", buffer);
   return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 let cachedSubtle: SubtleCrypto | null = null;
@@ -720,13 +878,12 @@ async function getSubtleCrypto(): Promise<SubtleCrypto> {
   if (cachedSubtle) {
     return cachedSubtle;
   }
-  if (typeof globalThis !== 'undefined' && globalThis.crypto?.subtle) {
+  if (typeof globalThis !== "undefined" && globalThis.crypto?.subtle) {
     cachedSubtle = globalThis.crypto.subtle;
     return cachedSubtle;
   }
-  const nodeCrypto = await import('crypto');
+  const nodeCrypto = await import("crypto");
   cachedSubtle = nodeCrypto.webcrypto.subtle;
   return cachedSubtle;
 }
 </script>
-

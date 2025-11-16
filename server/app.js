@@ -36,6 +36,29 @@ function logError(tag, message, error) {
   }
 }
 
+let processGuardsRegistered = false;
+function registerProcessGuards() {
+  if (processGuardsRegistered) {
+    return;
+  }
+  const isIgnorable = (error) => {
+    if (!error || typeof error !== 'object') return false;
+    return error.code === 'EPIPE' || error.code === 'ECONNRESET';
+  };
+  process.on('uncaughtException', (error) => {
+    if (isIgnorable(error)) {
+      logError('PROCESS', `捕获到可忽略的 ${error.code}，可能是客户端过早断开连接。`, error);
+      return;
+    }
+    logError('PROCESS', '未捕获异常', error);
+  });
+  process.on('unhandledRejection', (reason) => {
+    logError('PROCESS', '未处理的 Promise 拒绝', reason);
+  });
+  processGuardsRegistered = true;
+}
+registerProcessGuards();
+
 function maskMobile(mobile = '') {
   return String(mobile).replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2');
 }

@@ -1,5 +1,5 @@
 {
-  "name": "heytea-picture",
+  "name": "heytea-diy-toolkit",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -14,16 +14,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SuInk/heytea-picture.git"
+    "url": "git+https://github.com/SuInk/heytea-diy-toolkit.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/SuInk/heytea-picture/issues"
+    "url": "https://github.com/SuInk/heytea-diy-toolkit/issues"
   },
-  "homepage": "https://github.com/SuInk/heytea-picture#readme",
+  "homepage": "https://github.com/SuInk/heytea-diy-toolkit#readme",
   "devDependencies": {
     "concurrently": "^9.0.0"
   },
