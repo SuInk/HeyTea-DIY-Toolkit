@@ -40,6 +40,16 @@ npm start       # Express 读取 dist 并提供 /api/*
 
 仓库根目录包含 `api/sms/send.js`、`api/login/sms.js`、`api/user.js`、`api/upload.js` 等 Serverless 端点（内部都复用 `server/app.js`），Vercel 会为每个端点生成函数，前端可直接访问同源 `/api/*`。
 
+## 启用 CDN 静态资源
+
+如需加速前端加载，可将 `frontend/dist` 上传到任意 CDN / 对象存储，并通过 `VITE_CDN_BASE` 指定访问根路径：
+
+1. 生产构建前设置环境变量，例如 `.env.production` 中写入 `VITE_CDN_BASE=https://cdn.example.com/heytea/`（注意以 `/` 结尾）。
+2. 执行 `npm run frontend:build`，生成的静态文件会引用 CDN 前缀。
+3. 将 `frontend/dist` 上传到对应 CDN 路径，并确保后端仍可通过原域名的 `/api/*`。
+
+未设置 `VITE_CDN_BASE` 时，默认仍走相对路径。
+
 
 ## 目录结构
 

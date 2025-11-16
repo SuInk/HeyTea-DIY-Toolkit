@@ -332,76 +332,55 @@
       </div>
 
       <section class="mt-6">
-        <details
-          class="group rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-900"
+        <div
+          class="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-900"
         >
-          <summary
-            class="flex cursor-pointer items-center justify-between text-base font-semibold text-slate-100"
+          <div
+            class="flex items-center justify-between text-base font-semibold text-slate-100"
           >
-            <span>常见问题 & 联系方式</span>
-            <span class="text-xs font-normal text-slate-500 group-open:hidden"
-              >点击展开</span
-            >
-            <span
-              class="text-xs font-normal text-slate-500 hidden group-open:inline"
-              >点击收起</span
-            >
-          </summary>
-          <div class="mt-4 space-y-3 text-sm text-slate-700">
+            <span>常见问题</span>
+          </div>
+          <div class="mt-4 text-sm text-slate-700">
             <article
               class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
             >
-              <p class="font-semibold text-slate-900">1. 登录失败</p>
-              <p class="mt-1 text-slate-700">
-                提示“当前注册行为存在异常，请稍后再试或更换注册方式”。
-              </p>
-              <p class="mt-1 text-slate-600">
-                确认手机号已经注册喜茶，并且能够正常登录喜茶 App / 小程序。
-              </p>
-            </article>
-            <article
-              class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
-            >
-              <p class="font-semibold text-slate-900">2. 上传失败</p>
-              <p class="mt-1 text-slate-700">提示“文件格式不允许上传”。</p>
-              <p class="mt-1 text-slate-600">
-                请确保上传的原始文件为 PNG；JPG 会自动转换成
-                PNG，但偶尔会失败，可更换 PNG 文件后重试。
-              </p>
-            </article>
-            <article
-              class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
-            >
-              <p class="font-semibold text-slate-900">
-                3. 上传成功后小程序不显示
-              </p>
-              <p class="mt-1 text-slate-600">
-                确认上传工具使用的账号和喜茶登录账号保持一致，随后刷新喜茶小程序。
-              </p>
-            </article>
-            <article
-              class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
-            >
-              <p class="font-semibold text-slate-900">4. 其他上传失败</p>
-              <p class="mt-1 text-slate-600">
-                确认今日内上传未超过 10
-                张，并检查喜茶小程序是否能正常打开上传界面并制作喜贴。
-              </p>
+              <div class="space-y-4">
+                <div>
+                  <p class="font-semibold text-slate-900">
+                    1. 登录失败，提示“当前注册行为存在异常，请稍后再试或更换注册方式”。
+                  </p>
+                  <p class="mt-1 text-slate-600">
+                    确认手机号已经注册喜茶，并且能够正常登录喜茶 App / 小程序。
+                  </p>
+                </div>
+                <div>
+                  <p class="font-semibold text-slate-900">
+                    2. 上传失败，提示“文件格式不允许上传”。
+                  </p>
+                  <p class="mt-1 text-slate-600">
+                    请确保上传的原始文件为 PNG；JPG 会自动转换成 PNG，但不排除失败可能，可更换
+                    PNG 文件后重试。
+                  </p>
+                </div>
+                <div>
+                  <p class="font-semibold text-slate-900">
+                    3. 上传成功后小程序不显示
+                  </p>
+                  <p class="mt-1 text-slate-600">
+                    确认上传工具使用的账号和喜茶登录账号保持一致，随后刷新喜茶小程序。
+                  </p>
+                </div>
+                <div>
+                  <p class="font-semibold text-slate-900">4. 其他上传失败</p>
+                  <p class="mt-1 text-slate-600">
+                    确认今日内上传未超过 10张，并检查喜茶小程序是否能正常打开上传界面并制作喜贴。
+                  </p>
+                </div>
+              </div>
             </article>
           </div>
-        </details>
+        </div>
       </section>
-
-      <p class="mt-4 text-xs text-slate-500">
-        如需联系作者可邮箱
-        <a
-          href="mailto:leisurenot#outlook.com"
-          class="text-brand-200 underline decoration-dotted"
-        >
-          leisurenot@outlook.com
-        </a>
-        。日常使用或操作疑问请先参考常见问题，感谢理解。
-      </p>
     </div>
   </div>
 </template>
@@ -410,6 +389,7 @@
 import { computed, onUnmounted, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { isAxiosError } from "axios";
+import CryptoJS from "crypto-js";
 
 import {
   CAPTCHA_APP_ID,
@@ -435,6 +415,8 @@ import {
 const GITHUB_URL = "https://github.com/SuInk/HeyTea-DIY-Toolkit";
 const STORAGE_KEY = "heytea-token";
 const DONATE_QR_URL = `${import.meta.env.BASE_URL}donate.jpg`;
+const LOGIN_ERROR_HINT =
+  "如提示“当前注册行为存在异常，请稍后再试或更换注册方式”，请前往喜茶 App / 小程序注册后再尝试登录。";
 
 type UploadState = {
   type: "success" | "warning" | "error";
@@ -634,7 +616,7 @@ async function handleSmsLogin() {
     ElMessage.success("登录成功");
   } catch (error) {
     const message = getErrorMessage(error, "登录失败");
-    ElMessage.error(message);
+    ElMessage.error(`${message} ${LOGIN_ERROR_HINT}`);
   } finally {
     isLoggingIn.value = false;
   }
@@ -867,23 +849,67 @@ function buildFilename(base: string, blob?: Blob | null) {
 async function hashBlob(blob: Blob): Promise<string> {
   const buffer = await blob.arrayBuffer();
   const subtle = await getSubtleCrypto();
-  const digest = await subtle.digest("SHA-1", buffer);
-  return Array.from(new Uint8Array(digest))
+  if (subtle) {
+    const digest = await subtle.digest("SHA-1", buffer);
+    return arrayBufferToHex(digest);
+  }
+  return hashWithCryptoJS(buffer);
+}
+
+function hashWithCryptoJS(buffer: ArrayBuffer): string {
+  const wordArray = arrayBufferToWordArray(buffer);
+  return CryptoJS.SHA1(wordArray).toString(CryptoJS.enc.Hex);
+}
+
+function arrayBufferToWordArray(buffer: ArrayBuffer): CryptoJS.lib.WordArray {
+  const bytes = new Uint8Array(buffer);
+  const words: number[] = [];
+  for (let i = 0; i < bytes.length; i += 1) {
+    words[i >>> 2] =
+      (words[i >>> 2] ?? 0) | (bytes[i] << (24 - (i & 3) * 8));
+  }
+  return CryptoJS.lib.WordArray.create(words, bytes.length);
+}
+
+function arrayBufferToHex(buffer: ArrayBuffer) {
+  return Array.from(new Uint8Array(buffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
+type GlobalWithProcess = typeof globalThis & {
+  process?: { versions?: { node?: string } };
+};
+
 let cachedSubtle: SubtleCrypto | null = null;
-async function getSubtleCrypto(): Promise<SubtleCrypto> {
-  if (cachedSubtle) {
+let subtleStatus: "unknown" | "available" | "unavailable" = "unknown";
+
+async function getSubtleCrypto(): Promise<SubtleCrypto | null> {
+  if (subtleStatus !== "unknown") {
     return cachedSubtle;
   }
-  if (typeof globalThis !== "undefined" && globalThis.crypto?.subtle) {
-    cachedSubtle = globalThis.crypto.subtle;
+  const globalCrypto =
+    typeof globalThis !== "undefined" ? globalThis.crypto : undefined;
+  if (globalCrypto?.subtle) {
+    cachedSubtle = globalCrypto.subtle;
+    subtleStatus = "available";
     return cachedSubtle;
   }
-  const nodeCrypto = await import("crypto");
-  cachedSubtle = nodeCrypto.webcrypto.subtle;
-  return cachedSubtle;
+  const globalProcess = (globalThis as GlobalWithProcess).process;
+  if (globalProcess?.versions?.node) {
+    try {
+      const nodeCrypto = await import("crypto");
+      if (nodeCrypto?.webcrypto?.subtle) {
+        cachedSubtle = nodeCrypto.webcrypto.subtle;
+        subtleStatus = "available";
+        return cachedSubtle;
+      }
+    } catch (error) {
+      console.warn("Failed to load Node crypto for SubtleCrypto:", error);
+    }
+  }
+  subtleStatus = "unavailable";
+  cachedSubtle = null;
+  return null;
 }
 </script>
