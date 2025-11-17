@@ -192,7 +192,8 @@
                   >
                     <span class="text-xl">🖼️</span>
                     <p class="text-sm">
-                      先选择一张图片，系统会自动压缩并裁切到 596×832，也可用AI或其它工具处理后上传
+                      先选择一张图片，系统会自动压缩并裁切到
+                      596×832，也可用AI或其它工具处理后上传
                     </p>
                   </div>
                   <div
@@ -238,9 +239,7 @@
                   <el-form-item label="色彩模式">
                     <el-radio-group v-model="toneMode" size="small">
                       <el-radio-button label="binary">黑白</el-radio-button>
-                      <el-radio-button label="sampled"
-                        >点阵</el-radio-button
-                      >
+                      <el-radio-button label="sampled">点阵</el-radio-button>
                       <el-radio-button label="original">原图</el-radio-button>
                     </el-radio-group>
                   </el-form-item>
@@ -254,7 +253,50 @@
                         show-stops
                       />
                       <p class="mt-1 text-xs text-slate-400">
-                        高于阈值的像素会被转成黑色，当前：{{ binaryThreshold }}。
+                        高于阈值的像素会被转成黑色，当前：{{
+                          binaryThreshold
+                        }}。
+                      </p>
+                    </div>
+                  </el-form-item>
+                  <el-form-item
+                    v-if="toneMode === 'sampled'"
+                    label="点阵阈值"
+                  >
+                    <div class="w-full">
+                      <el-slider
+                        v-model="dotThreshold"
+                        :min="40"
+                        :max="220"
+                        :step="5"
+                        show-stops
+                        @change="renderPreview"
+                      />
+                      <p class="mt-1 text-xs text-slate-400">
+                        块平均暗度高于阈值会变成纯黑，当前：{{ dotThreshold }}。
+                      </p>
+                    </div>
+                  </el-form-item>
+                  <el-form-item
+                    v-if="toneMode === 'sampled'"
+                    label="点阵形状"
+                  >
+                    <div class="w-full">
+                      <el-select
+                        v-model="dotPattern"
+                        class="w-full"
+                        size="small"
+                        @change="renderPreview"
+                      >
+                        <el-option
+                          v-for="option in DOT_PATTERN_CHOICES"
+                          :key="option.value"
+                          :label="option.label"
+                          :value="option.value"
+                        />
+                      </el-select>
+                      <p class="mt-1 text-xs text-slate-400">
+                        {{ activePatternHint }}
                       </p>
                     </div>
                   </el-form-item>
@@ -266,11 +308,12 @@
                       <el-slider
                         v-model="sampleDensity"
                         :min="2"
-                        :max="16"
+                        :max="24"
                         :step="1"
+                        @change="renderPreview"
                       />
-                      <p class="mt-1 text-xs text-slate-400">
-                        数值越小点阵越细腻，不保证实际打印效果，当前：{{
+                      <p class="mt-1 text-xs text-slate-400 leading-relaxed">
+                        数值越小点阵越细腻，实际打印会略有偏差。当前：{{
                           sampleDensity
                         }}px。
                       </p>
@@ -314,6 +357,12 @@
                     重新渲染
                   </el-button>
                 </div>
+                <p
+                  v-if="uploadDisabledReason"
+                  class="mt-2 text-xs text-red-300"
+                >
+                  无法上传：{{ uploadDisabledReason }}
+                </p>
 
                 <el-result
                   v-if="uploadState"
@@ -373,11 +422,11 @@
                 </div>
                 <div>
                   <p class="font-semibold text-slate-900">
-                    2. 上传失败，提示“文件格式不允许上传”。
+                    2. 上传失败，提示“文件格式不允许上传”/“文件大小不符合要求”。
                   </p>
                   <p class="mt-1 text-slate-400">
-                    请确保上传的原始文件为 PNG；JPG 会自动转换成
-                    PNG，但不排除失败可能，可更换 PNG 文件后重试。
+                    JPG 会自动转换成PNG并降低分辨率以满足200KB要求，但不排除失败可能，可更换 PNG
+                    文件或更换小于200KB图片后重试。
                   </p>
                 </div>
                 <div>
@@ -391,8 +440,11 @@
                 <div>
                   <p class="font-semibold text-slate-900">4. 其他上传失败</p>
                   <p class="mt-1 text-slate-400">
-                    确认今日内上传未超过
+                    1. 确认今日内上传未超过
                     10张，并检查喜茶小程序是否能正常打开上传界面并制作喜贴。
+                  </p>
+                  <p class="mt-1 text-slate-400">
+                    2. 部分浏览器不支持现代webapi，可更换Chrome或Safari后重试上传。
                   </p>
                 </div>
               </div>
@@ -400,7 +452,9 @@
           </div>
         </div>
       </section>
-      <footer class="bottom-5 left-0 w-full mt-10 text-center text-xs text-slate-500">
+      <footer
+        class="bottom-5 left-0 w-full mt-10 text-center text-xs text-slate-500"
+      >
         免责声明：本服务仅供测试使用，可在
         <a
           href="https://github.com/SuInk/HeyTea-DIY-Toolkit"
@@ -432,6 +486,7 @@ import { requestCaptcha } from "@/utils/captcha";
 import {
   readFileAsImage,
   renderToCupCanvas,
+  type DotPattern,
   type ToneMode,
 } from "@/utils/image";
 import {
@@ -447,6 +502,32 @@ const GITHUB_URL = "https://github.com/SuInk/HeyTea-DIY-Toolkit";
 const STORAGE_KEY = "heytea-token";
 const DONATE_QR_URL = `${import.meta.env.BASE_URL}donate.jpg`;
 const MESSAGE_DURATION = 7000;
+const DOT_PATTERN_CHOICES: Array<{
+  value: DotPattern;
+  label: string;
+  hint: string;
+}> = [
+  {
+    value: "circle",
+    label: "圆形点阵",
+    hint: "以圆形为中心向外扩散，最贴近传统印刷圆点。",
+  },
+  {
+    value: "diamond",
+    label: "菱形点阵",
+    hint: "以菱形方向铺开，适合斜向纹理。",
+  },
+  {
+    value: "cross",
+    label: "十字形点阵",
+    hint: "优先沿十字方向填充，线条感更强。",
+  },
+  {
+    value: "grid",
+    label: "方格点阵",
+    hint: "按像素顺序逐行堆叠，方块颗粒规则整齐。",
+  },
+];
 
 type ToastType = "success" | "error" | "warning" | "info";
 
@@ -539,9 +620,11 @@ const canvasRef = ref<HTMLCanvasElement>();
 const workingImage = ref<HTMLImageElement | null>(null);
 const processedBlob = ref<Blob | null>(null);
 const toneMode = ref<ToneMode>("binary");
+const dotPattern = ref<DotPattern>("circle");
 const isDraggingFile = ref(false);
 const binaryThreshold = ref(170);
 const sampleDensity = ref(6);
+const dotThreshold = ref(170);
 const fitMode = ref<"cover" | "contain">("cover");
 const forcePng = ref(true);
 const isRendering = ref(false);
@@ -557,11 +640,6 @@ const compressionHint = ref("");
 const lastUploadHash = ref<string | null>(null);
 
 const hasPreview = computed(() => Boolean(processedBlob.value));
-const canUpload = computed(
-  () =>
-    !!(authToken.value && user.value && processedBlob.value) &&
-    !isUploading.value
-);
 const processedSizeLabel = computed(() =>
   processedBlob.value
     ? `${(processedBlob.value.size / 1024).toFixed(1)} KB`
@@ -574,10 +652,30 @@ const processedFormatLabel = computed(() =>
       : "PNG"
     : "--"
 );
+const activePatternHint = computed(
+  () =>
+    DOT_PATTERN_CHOICES.find((choice) => choice.value === dotPattern.value)
+      ?.hint ?? "选择点阵形状来调整灰阶纹理。"
+);
 const exceedsLimit = computed(
   () => (processedBlob.value?.size ?? 0) > MAX_UPLOAD_BYTES
 );
 const MAX_SIZE_KB = Math.round(MAX_UPLOAD_BYTES / 1024);
+const uploadDisabledReason = computed(() => {
+  if (!authToken.value || !user.value) {
+    return "请先登录";
+  }
+  if (!processedBlob.value) {
+    return "请先选择并渲染图片";
+  }
+  if (exceedsLimit.value) {
+    return `处理后的图片超过 ${MAX_SIZE_KB} KB`;
+  }
+  return null;
+});
+const canUpload = computed(
+  () => !uploadDisabledReason.value && !isUploading.value
+);
 
 function triggerFileDialog() {
   fileInputRef.value?.click();
@@ -664,7 +762,7 @@ async function handleSmsLogin() {
     showSuccessMessage("登录成功");
   } catch (error) {
     const message = getErrorMessage(error, "登录失败");
-    showErrorMessage(`${message}`);
+    showErrorMessage(`${message}（请确认手机号已注册喜茶账号）`);
   } finally {
     isLoggingIn.value = false;
   }
@@ -776,8 +874,13 @@ async function renderPreview() {
     const blob = await renderToCupCanvas(canvasRef.value, workingImage.value, {
       toneMode: toneMode.value,
       threshold:
-        toneMode.value === "binary" ? binaryThreshold.value : undefined,
+        toneMode.value === "binary"
+          ? binaryThreshold.value
+          : toneMode.value === "sampled"
+          ? dotThreshold.value
+          : undefined,
       sampleDensity: sampleDensity.value,
+      dotPattern: dotPattern.value,
       fit: fitMode.value,
       targetFormat: forcePng.value ? "png" : "auto",
       maxBytes: MAX_UPLOAD_BYTES,
@@ -861,11 +964,22 @@ function handleDownload() {
   URL.revokeObjectURL(url);
 }
 
-watch([toneMode, binaryThreshold, sampleDensity, fitMode, forcePng], () => {
-  if (workingImage.value) {
-    renderPreview();
+watch(
+  [
+    toneMode,
+    binaryThreshold,
+    dotThreshold,
+    sampleDensity,
+    dotPattern,
+    fitMode,
+    forcePng,
+  ],
+  () => {
+    if (workingImage.value) {
+      renderPreview();
+    }
   }
-});
+);
 
 watch(rememberMe, (next) => {
   if (!next) {

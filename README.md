@@ -2,16 +2,18 @@
 
 Vue 3 + TypeScript + Element Plus + Tailwind CSS + Node.js 代理，实现喜茶杯贴上传工具，逻辑参考 [FuQuan233/HeyTea_AutoUpload](https://github.com/FuQuan233/HeyTea_AutoUpload)。
 
+ **禁止用于违法用途！！！**
+
 ## 在线体验
 
 如果只是想直接使用，可以访问 
 1. Vercel 托管的版本：<https://heytea-diy-toolkit.vercel.app> 
-2. 国内加速版本<https://heytea.suink.cn>
+2. 国内加速版本：<https://heytea.suink.cn>
 ## 功能概览
 
 - 手机号短信登录（Node 端转发喜茶接口）
 - Token 快速登录与本地记忆
-- 596×832 画布自动缩放、裁切、降采样黑白点阵（可调采样密度）、强制 PNG、自动压缩至 ≤ 200KB
+- 596×832 画布自动缩放、裁切、降采样黑白点阵（阈值转纯黑、可自定义点阵形状与采样密度）、强制 PNG、自动压缩至 ≤ 200KB
 - 处理结果预览、下载、重复上传提醒
 - Node 代理直连官方 API：验证码、登录、用户信息、杯贴上传，并可托管前端静态文件
 
@@ -39,24 +41,4 @@ npm start       # Express 读取 dist 并提供 /api/*
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FSuInk%2FHeyTea-DIY-Toolkit&project-name=heytea-diy-toolkit&repository-name=heytea-diy-toolkit&build-command=npm%20run%20frontend%3Abuild&install-command=npm%20install&output-directory=frontend%2Fdist)
 
 仓库根目录包含 `api/sms/send.js`、`api/login/sms.js`、`api/user.js`、`api/upload.js` 等 Serverless 端点（内部都复用 `server/app.js`），Vercel 会为每个端点生成函数，前端可直接访问同源 `/api/*`。
-
-## 启用 CDN 静态资源
-
-如需加速前端加载，可将 `frontend/dist` 上传到任意 CDN / 对象存储，并通过 `VITE_CDN_BASE` 指定访问根路径：
-
-1. 生产构建前设置环境变量，例如 `.env.production` 中写入 `VITE_CDN_BASE=https://cdn.example.com/heytea/`（注意以 `/` 结尾）。
-2. 执行 `npm run frontend:build`，生成的静态文件会引用 CDN 前缀。
-3. 将 `frontend/dist` 上传到对应 CDN 路径，并确保后端仍可通过原域名的 `/api/*`。
-
-未设置 `VITE_CDN_BASE` 时，默认仍走相对路径。
-
-
-## 目录结构
-
-```
-frontend/  # Vite + Vue3 前端
-server/    # Express 代理层
-```
-
-开发环境下，`frontend/.env.development` 默认指向 `http://localhost:8787`。如需自定义，修改该文件或通过环境变量覆盖 `VITE_API_BASE`。
 

@@ -1,11 +1,13 @@
 import { CUP_HEIGHT, CUP_WIDTH, MAX_UPLOAD_BYTES } from '@/config/heytea';
 
 export type ToneMode = 'binary' | 'sampled' | 'original';
+export type DotPattern = 'circle' | 'diamond' | 'cross' | 'grid';
 
 export interface RenderOptions {
   toneMode: ToneMode;
   threshold?: number;
   sampleDensity?: number;
+  dotPattern?: DotPattern;
   fit: 'contain' | 'cover';
   maxBytes?: number;
   targetFormat?: 'png' | 'auto';
@@ -68,7 +70,7 @@ export async function renderToCupCanvas(
         applyBinaryThreshold(imageData, options.threshold);
         break;
       case 'sampled':
-        applySampledMonochrome(imageData, options.sampleDensity, options.threshold);
+        applyDotMatrixEffect(imageData, options.sampleDensity, options.threshold, options.dotPattern);
         break;
       default:
         applyBinaryThreshold(imageData, options.threshold);
@@ -171,13 +173,16 @@ function quantizeColors(data: Uint8ClampedArray, step: number) {
   }
 }
 
-function applySampledMonochrome(imageData: ImageData, density = 6, threshold = 170) {
+function applyDotMatrixEffect(
+  imageData: ImageData,
+  density = 6,
+  threshold = 170,
+  pattern: DotPattern = 'circle'
+) {
   const blockSize = Math.max(2, Math.min(32, Math.round(density)));
-  const limit = Math.max(0, Math.min(255, Math.round(threshold)));
-  const bias = (limit - 170) / 255;
+  const limit = clampByte(Math.round(threshold ?? 170));
   const { data, width, height } = imageData;
 
-  // Down-sample blocks but fill them with a deterministic dot pattern to approximate 0-255 brightness via black/white pixels.
   for (let y = 0; y < height; y += blockSize) {
     const blockHeight = Math.min(blockSize, height - y);
     for (let x = 0; x < width; x += blockSize) {
@@ -191,18 +196,23 @@ function applySampledMonochrome(imageData: ImageData, density = 6, threshold = 1
       for (let offsetY = 0; offsetY < blockHeight; offsetY += 1) {
         for (let offsetX = 0; offsetX < blockWidth; offsetX += 1) {
           const idx = ((y + offsetY) * width + (x + offsetX)) * 4;
-          const gray = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
-          graySum += gray;
+          graySum += getLuminance(data, idx);
         }
       }
 
       const grayValue = graySum / pixelCount;
-      const normalized = clamp01(grayValue / 255 - bias);
+      const darkness = 255 - grayValue;
+      if (darkness >= limit) {
+        fillBlock(data, width, x, y, blockWidth, blockHeight, 0);
+        continue;
+      }
+
+      const normalized = clamp01(grayValue / 255);
       const whitePixels = Math.round(normalized * pixelCount);
-      const pattern = getHalftonePattern(blockWidth, blockHeight);
+      const patternOrder = getDotPattern(blockWidth, blockHeight, pattern);
 
       for (let order = 0; order < pixelCount; order += 1) {
-        const localIndex = pattern[order];
+        const localIndex = patternOrder[order];
         const localX = localIndex % blockWidth;
         const localY = Math.floor(localIndex / blockWidth);
         const idx = ((y + localY) * width + (x + localX)) * 4;
@@ -215,6 +225,37 @@ function applySampledMonochrome(imageData: ImageData, density = 6, threshold = 1
   }
 }
 
+function fillBlock(
+  data: Uint8ClampedArray,
+  width: number,
+  startX: number,
+  startY: number,
+  blockWidth: number,
+  blockHeight: number,
+  value: number
+) {
+  for (let offsetY = 0; offsetY < blockHeight; offsetY += 1) {
+    for (let offsetX = 0; offsetX < blockWidth; offsetX += 1) {
+      const idx = ((startY + offsetY) * width + (startX + offsetX)) * 4;
+      data[idx] = data[idx + 1] = data[idx + 2] = value;
+    }
+  }
+}
+
+function clampByte(value: number) {
+  if (value < 0) {
+    return 0;
+  }
+  if (value > 255) {
+    return 255;
+  }
+  return value;
+}
+
+function getLuminance(data: Uint8ClampedArray, index: number) {
+  return data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
+}
+
 function clamp01(value: number) {
   if (value < 0) {
     return 0;
@@ -225,15 +266,37 @@ function clamp01(value: number) {
   return value;
 }
 
-const halftonePatternCache = new Map<string, Uint16Array>();
+const dotPatternCache = new Map<string, Uint16Array>();
 
-function getHalftonePattern(width: number, height: number): Uint16Array {
-  const key = `${width}x${height}`;
-  const cached = halftonePatternCache.get(key);
+function getDotPattern(width: number, height: number, pattern: DotPattern): Uint16Array {
+  const key = `${pattern}:${width}x${height}`;
+  const cached = dotPatternCache.get(key);
   if (cached) {
     return cached;
   }
 
+  let order: Uint16Array;
+  switch (pattern) {
+    case 'diamond':
+      order = buildDiamondPattern(width, height);
+      break;
+    case 'cross':
+      order = buildCrossPattern(width, height);
+      break;
+    case 'grid':
+      order = buildGridPattern(width, height);
+      break;
+    case 'circle':
+    default:
+      order = buildCirclePattern(width, height);
+      break;
+  }
+
+  dotPatternCache.set(key, order);
+  return order;
+}
+
+function buildCirclePattern(width: number, height: number) {
   type Entry = { index: number; distance: number; angle: number };
   const entries: Entry[] = [];
   const centerX = (width - 1) / 2;
@@ -262,8 +325,102 @@ function getHalftonePattern(width: number, height: number): Uint16Array {
   entries.forEach((entry, idx) => {
     pattern[idx] = entry.index;
   });
+  return pattern;
+}
 
-  halftonePatternCache.set(key, pattern);
+function buildDiamondPattern(width: number, height: number) {
+  type Entry = { index: number; priority: number; angle: number };
+  const entries: Entry[] = [];
+  const centerX = (width - 1) / 2;
+  const centerY = (height - 1) / 2;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const dx = Math.abs(x - centerX);
+      const dy = Math.abs(y - centerY);
+      entries.push({
+        index: y * width + x,
+        priority: dx + dy,
+        angle: Math.atan2(y - centerY, x - centerX),
+      });
+    }
+  }
+
+  entries.sort((a, b) => {
+    if (a.priority === b.priority) {
+      return a.angle - b.angle;
+    }
+    return a.priority - b.priority;
+  });
+
+  const pattern = new Uint16Array(entries.length);
+  entries.forEach((entry, idx) => {
+    pattern[idx] = entry.index;
+  });
+  return pattern;
+}
+
+function buildCrossPattern(width: number, height: number) {
+  type Entry = { index: number; radius: number; axisBias: number };
+  const entries: Entry[] = [];
+  const centerX = (width - 1) / 2;
+  const centerY = (height - 1) / 2;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const dx = Math.abs(x - centerX);
+      const dy = Math.abs(y - centerY);
+      entries.push({
+        index: y * width + x,
+        radius: Math.max(dx, dy),
+        axisBias: Math.abs(dx - dy),
+      });
+    }
+  }
+
+  entries.sort((a, b) => {
+    if (a.radius === b.radius) {
+      return b.axisBias - a.axisBias;
+    }
+    return a.radius - b.radius;
+  });
+
+  const pattern = new Uint16Array(entries.length);
+  entries.forEach((entry, idx) => {
+    pattern[idx] = entry.index;
+  });
+  return pattern;
+}
+
+function buildGridPattern(width: number, height: number) {
+  type Entry = { index: number; radius: number; angle: number };
+  const entries: Entry[] = [];
+  const centerX = (width - 1) / 2;
+  const centerY = (height - 1) / 2;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const dx = Math.abs(x - centerX);
+      const dy = Math.abs(y - centerY);
+      entries.push({
+        index: y * width + x,
+        radius: Math.max(dx, dy),
+        angle: Math.atan2(y - centerY, x - centerX),
+      });
+    }
+  }
+
+  entries.sort((a, b) => {
+    if (a.radius === b.radius) {
+      return a.angle - b.angle;
+    }
+    return a.radius - b.radius;
+  });
+
+  const pattern = new Uint16Array(entries.length);
+  entries.forEach((entry, idx) => {
+    pattern[idx] = entry.index;
+  });
   return pattern;
 }
 
@@ -271,7 +428,7 @@ function applyBinaryThreshold(imageData: ImageData, threshold = 170) {
   const limit = Math.max(0, Math.min(255, Math.round(threshold)));
   const { data } = imageData;
   for (let i = 0; i < data.length; i += 4) {
-    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    const gray = getLuminance(data, i);
     const value = gray >= limit ? 255 : 0;
     data[i] = data[i + 1] = data[i + 2] = value;
   }
