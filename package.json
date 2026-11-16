@@ -1,7 +1,7 @@
 {
-  "name": "heytea-diy-toolkit",
+  "name": "heytea-sticker-studio",
   "version": "1.0.0",
-  "description": "",
+  "description": "喜茶杯贴工作台 / HeyTea Sticker Studio",
   "main": "index.js",
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix frontend\"",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SuInk/heytea-diy-toolkit.git"
+    "url": "git+https://github.com/frozenbunexe/HeyTea-DIY-Toolkit.git"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +24,7 @@
   "bugs": {
     "url": "https://github.com/SuInk/heytea-diy-toolkit/issues"
   },
-  "homepage": "https://github.com/SuInk/heytea-diy-toolkit#readme",
+  "homepage": "https://github.com/frozenbunexe/HeyTea-DIY-Toolkit#readme",
   "devDependencies": {
     "concurrently": "^9.0.0"
   },

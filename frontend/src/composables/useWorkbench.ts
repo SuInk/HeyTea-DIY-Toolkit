@@ -21,7 +21,7 @@ import {
 } from "@/services/heytea";
 
 export function useWorkbench() {
-  const GITHUB_URL = "https://github.com/SuInk/HeyTea-DIY-Toolkit";
+  const GITHUB_URL = "https://github.com/frozenbunexe/HeyTea-DIY-Toolkit";
   const DONATE_QR_URL = `${import.meta.env.BASE_URL}donate.jpg`;
 
   const DOT_PATTERN_CHOICES: Array<{

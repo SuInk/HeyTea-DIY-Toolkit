@@ -67,7 +67,7 @@ const {
   <div class="studio">
     <header class="topbar">
       <a class="wordmark" href="/" @click.prevent
-        ><span class="brand-mark">喜</span><span>杯贴工作室</span></a
+        ><span class="brand-mark">喜</span><span>喜茶杯贴工作台</span></a
       >
       <div class="topbar-actions">
         <span class="local-badge"><i />本机工作台</span
