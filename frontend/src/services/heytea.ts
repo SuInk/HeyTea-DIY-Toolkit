@@ -9,7 +9,7 @@ export interface CaptchaPayload {
 
 const http = axios.create({
   baseURL: BACKEND_API_BASE,
-  timeout: 15000,
+  timeout: 60000,
 });
 
 export async function sendSmsCode(

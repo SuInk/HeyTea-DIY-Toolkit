@@ -10,8 +10,8 @@ export default defineConfig(({ mode }) => {
     base: env.VITE_CDN_BASE || '/',
     plugins: [vue()],
     server: {
-      host: '0.0.0.0',
-      allowedHosts: ['heytea.suink.cn'],
+      host: '127.0.0.1',
+      allowedHosts: ['localhost', '127.0.0.1'],
       proxy: {
         '/api': {
           target: env.VITE_DEV_PROXY_TARGET || 'http://127.0.0.1:8787',

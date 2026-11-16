@@ -1,40 +1,37 @@
 const path = require('path');
 const fs = require('fs');
 const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
 const axios = require('axios');
 const multer = require('multer');
 const FormData = require('form-data');
+const { imageMetadata, upstreamOptions } = require('./security');
+const upstream = axios.create(upstreamOptions);
+const { createSecureTransport, loginSignature, imageSignature } = require('./secureTransport');
+const secure = createSecureTransport(upstream);
 
 const { HEYTEA_API_BASE, HEYTEA_BASE_HEADERS, CUP_WIDTH, CUP_HEIGHT } = require('./heyteaConfig');
 const { encryptHeyteaMobile, timestampSign, decryptResponseData } = require('./heyteaCrypto');
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 200 * 1024, files: 1, fields: 4, parts: 5, fieldNameSize: 50, fieldSize: 8192 } });
 const isVercel = Boolean(process.env.VERCEL);
 
-app.use(cors({ origin: true }));
-app.use(express.json({ limit: '5mb' }));
-app.use(morgan('dev'));
-
-function logInfo(tag, message, extra) {
-  const ts = new Date().toISOString();
-  if (extra !== undefined) {
-    console.log(`[${ts}][${tag}] ${message}`, extra);
-  } else {
-    console.log(`[${ts}][${tag}] ${message}`);
+// Local-only deployment: reject foreign origins and DNS-rebinding hosts.
+app.use((req, res, next) => {
+  if (!['127.0.0.1', 'localhost'].includes(req.hostname)) {
+    return res.status(403).json({ message: 'Local access only' });
   }
-}
-
-function logError(tag, message, error) {
-  const ts = new Date().toISOString();
-  if (error) {
-    console.error(`[${ts}][${tag}] ${message}`, error);
-  } else {
-    console.error(`[${ts}][${tag}] ${message}`);
+  const origin = req.get('origin');
+  if (origin && origin !== `http://${req.get('host')}`) {
+    return res.status(403).json({ message: 'Same-origin access only' });
   }
-}
+  next();
+});
+app.use(express.json({ limit: '32kb', inflate: false }));
+
+// Never log request payloads, tokens, user data or Axios request objects.
+function logInfo(tag) { console.log(`[${new Date().toISOString()}][${tag}] OK`); }
+function logError(tag) { console.error(`[${new Date().toISOString()}][${tag}] Failed`); }
 
 let processGuardsRegistered = false;
 function registerProcessGuards() {
@@ -64,6 +61,9 @@ function maskMobile(mobile = '') {
 }
 
 function buildHeaders(currentPage, token) {
+  if (!currentPage.startsWith('/pages/login/')) {
+    return {'x-client':'app', 'x-client-version':'163', ...(token ? {Authorization:`Bearer ${token}`} : {})};
+  }
   const headers = {
     ...HEYTEA_BASE_HEADERS,
     'current-page': currentPage,
@@ -92,7 +92,7 @@ app.get('/api/health', (_, res) => {
 
 app.post('/api/sms/send', async (req, res) => {
   const { mobile, ticket, randstr } = req.body || {};
-  if (!mobile) {
+  if (typeof mobile !== 'string' || !/^1[3-9]\d{9}$/.test(mobile)) {
     return res.status(400).json({ message: '手机号必填' });
   }
 
@@ -113,15 +113,19 @@ app.post('/api/sms/send', async (req, res) => {
     }
 
     const headers = buildHeaders('/pages/login/login_app/index');
-    const { data } = await axios.post(
-      `${HEYTEA_API_BASE}/api/service-member/openapi/vip/user/sms/verifiyCode/send`,
+    const { data } = await secure.post(
+      '/api/service-member/openapi/vip/user/sms/verifiyCode/send',
       payload,
-      { headers }
+      headers
     );
 
     if (data.code === 4005021) {
       logInfo('SMS', '需要人机验证', { mobile: maskMobile(mobile) });
       return res.json({ requiresCaptcha: true, message: data.message });
+    }
+
+    if (typeof data.code !== 'number') {
+      return res.status(502).json({ message: '发送状态未确认；若已收到验证码，可直接登录，请勿连续重发' });
     }
 
     if (data.code !== 0) {
@@ -139,14 +143,17 @@ app.post('/api/sms/send', async (req, res) => {
 
 app.post('/api/login/sms', async (req, res) => {
   const { mobile, smsCode } = req.body || {};
-  if (!mobile || !smsCode) {
+  if (typeof mobile !== 'string' || !/^1[3-9]\d{9}$/.test(mobile) || typeof smsCode !== 'string' || !/^\d{4,8}$/.test(smsCode)) {
     return res.status(400).json({ message: '手机号与验证码必填' });
   }
 
   try {
     const headers = buildHeaders('/pages/login/login_app/verify_code/index');
-    const { data } = await axios.post(
-      `${HEYTEA_API_BASE}/api/service-login/openapi/vip/user/login_v1`,
+    const loginPath = '/api/service-login/openapi/vip/user/login_v1';
+    const loginTime = String(Date.now());
+    Object.assign(headers, {biz:'user', url:loginPath, timeStamp:loginTime, hmacStr:loginSignature(loginPath,loginTime)});
+    const { data } = await secure.post(
+      loginPath,
       {
         channel: 'A',
         client: 'app',
@@ -155,11 +162,14 @@ app.post('/api/login/sms', async (req, res) => {
         phone: encryptHeyteaMobile(mobile),
         email: null,
         smsCode,
+        deviceId: require('node:crypto').randomUUID(),
+        ticket: '',
+        verifyTicket: '',
         zone: '86',
         cryptoLevel: 2,
         ticketFrom: 'min',
       },
-      { headers }
+      headers
     );
 
     if (data.code !== 0 || !data.data?.token) {
@@ -179,7 +189,7 @@ app.get('/api/user', async (req, res) => {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ')
     ? authHeader.slice(7)
-    : req.headers.authorization || req.query.token;
+    : req.headers.authorization;
 
   if (!token) {
     return res.status(400).json({ message: '缺少授权 token' });
@@ -187,7 +197,7 @@ app.get('/api/user', async (req, res) => {
 
   try {
     const headers = buildHeaders('/pages/my/index', token);
-    const { data } = await axios.get(
+    const { data } = await upstream.get(
       `${HEYTEA_API_BASE}/api/service-member/vip/user/info`,
       { headers }
     );
@@ -212,35 +222,39 @@ app.get('/api/user', async (req, res) => {
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   const { token, userMainId, width = CUP_WIDTH, height = CUP_HEIGHT } = req.body || {};
 
-  if (!token || !userMainId) {
+  if (typeof token !== 'string' || !token || token.length > 8192 || /[\r\n]/.test(token) || !/^\d{1,30}$/.test(String(userMainId || ''))) {
     return res.status(400).json({ message: '缺少 token 或 userMainId' });
   }
   if (!req.file) {
     return res.status(400).json({ message: '缺少文件' });
   }
 
+  const image = imageMetadata(req.file);
+  if (!image) return res.status(400).json({ message: '只支持不超过 200KB 的 PNG/JPEG 图片' });
+
   try {
     const timestamp = Date.now();
     const sign = timestampSign(userMainId, timestamp);
     const headers = buildHeaders('/pages/diy/submit/index', token);
     delete headers['Content-Type'];
+    headers['x-client-version'] = '163';
 
     const formData = new FormData();
     formData.append('file', req.file.buffer, {
-      filename: req.file.originalname || 'cup.png',
-      contentType: req.file.mimetype || 'image/png',
+      filename: image.filename,
+      contentType: image.mime,
     });
-    formData.append('width', String(width || CUP_WIDTH));
-    formData.append('height', String(height || CUP_HEIGHT));
+    formData.append('width', String(CUP_WIDTH));
+    formData.append('height', String(CUP_HEIGHT));
+    formData.append('aiNos', '');
+    formData.append('deviceType', 'PHONE');
 
-    const target = `${HEYTEA_API_BASE}/api/service-cps/user/diy?sign=${sign}&t=${timestamp}`;
-    const { data } = await axios.post(target, formData, {
+    const target = `${HEYTEA_API_BASE}/api/service-cps/user/diy?sign=${sign}&t=${timestamp}&hash=${imageSignature(req.file.buffer,timestamp)}`;
+    const { data } = await upstream.post(target, formData, {
       headers: {
         ...headers,
         ...formData.getHeaders(),
       },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
     });
 
     if (data.code !== 0) {
@@ -266,5 +280,11 @@ if (!isVercel && fs.existsSync(distDir)) {
     return res.sendFile(path.join(distDir, 'index.html'));
   });
 }
+
+// Do not emit parser stack traces or malformed request content.
+app.use((error, req, res, next) => {
+  const status = error instanceof multer.MulterError ? 400 : (error.status >= 400 && error.status < 500 ? error.status : 500);
+  res.status(status).json({ message: status === 500 ? '服务处理失败' : '请求格式或大小不符合要求' });
+});
 
 module.exports = app;

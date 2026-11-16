@@ -3,10 +3,8 @@
     "express": "^5.1.0",
     "form-data": "^4.0.4",
     "crypto-js": "^4.2.0",
-    "cors": "^2.8.5",
     "axios": "^1.13.2",
-    "multer": "^2.0.2",
-    "morgan": "^1.10.1"
+    "multer": "^2.0.2"
   },
   "version": "1.0.0",
   "scripts": {
@@ -15,5 +13,6 @@
   },
   "name": "server",
   "type": "commonjs",
-  "main": "index.js"
+  "main": "index.js",
+  "license": "MIT"
 }

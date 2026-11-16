@@ -1,1075 +1,375 @@
+<script setup lang="ts">
+import { ref } from "vue";
+import {
+  AlertDialogRoot,
+  AlertDialogPortal,
+  AlertDialogOverlay,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from "reka-ui";
+import AccountDialog from "./components/AccountDialog.vue";
+import EditorControls from "./components/EditorControls.vue";
+import { useWorkbench } from "./composables/useWorkbench";
+const accountOpen = ref(false);
+const {
+  confirmOpen,
+  resolveConfirmation,
+  GITHUB_URL,
+  DONATE_QR_URL,
+  activeTab,
+  phone,
+  smsCode,
+  manualToken,
+  user,
+  isSendingCode,
+  isLoggingIn,
+  countdown,
+  fileInputRef,
+  canvasRef,
+  toneMode,
+  dotPattern,
+  isDraggingFile,
+  binaryThreshold,
+  sampleDensity,
+  dotThreshold,
+  fitMode,
+  forcePng,
+  isRendering,
+  downloadName,
+  selectedFileLabel,
+  uploadState,
+  isUploading,
+  compressionHint,
+  hasPreview,
+  processedSizeLabel,
+  processedFormatLabel,
+  exceedsLimit,
+  uploadDisabledReason,
+  canUpload,
+  triggerFileDialog,
+  handleSendCode,
+  handleSmsLogin,
+  handleTokenLogin,
+  clearAuth,
+  onFileInput,
+  handleDragEnter,
+  handleDragOver,
+  handleDragLeave,
+  handleDrop,
+  renderPreview,
+  handleUpload,
+  handleDownload,
+  notice,
+} = useWorkbench();
+</script>
 <template>
-  <div class="min-h-screen bg-slate-950 pb-16 text-slate-50">
-    <div class="mx-auto max-w-6xl px-4 py-10">
-      <header class="flex flex-col gap-2 pb-8">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <p class="text-sm uppercase tracking-widest text-brand-300">
-            HeyTea DIY Toolkit
-          </p>
-          <a
-            :href="GITHUB_URL"
-            class="flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-slate-100 transition hover:border-white/60 hover:bg-white/10"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              class="h-4 w-4 fill-current"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 .5a11.5 11.5 0 0 0-3.64 22.42c.58.11.79-.25.79-.56v-2c-3.21.7-3.89-1.38-3.89-1.38a3.07 3.07 0 0 0-1.28-1.7c-1.05-.72.08-.7.08-.7a2.43 2.43 0 0 1 1.78 1.2 2.46 2.46 0 0 0 3.35 1 2.47 2.47 0 0 1 .74-1.55c-2.56-.3-5.26-1.28-5.26-5.71A4.47 4.47 0 0 1 5.31 8a4.14 4.14 0 0 1 .11-3.05s1-.32 3.3 1.23a11.33 11.33 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23a4.14 4.14 0 0 1 .12 3.05 4.46 4.46 0 0 1 1.18 3.11c0 4.45-2.71 5.41-5.28 5.7a2.77 2.77 0 0 1 .8 2.16v3.21c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"
-              />
-            </svg>
-            <span>GitHub</span>
-          </a>
-        </div>
-        <h1 class="text-3xl font-semibold">喜茶杯贴工作台</h1>
-      </header>
-
-      <div class="grid gap-6 lg:grid-cols-5">
-        <section class="lg:col-span-2">
-          <el-card
-            body-style="{padding: '1.5rem'}"
-            shadow="hover"
-            class="space-y-4"
-          >
-            <div
-              :class="[
-                'rounded-xl border p-4 text-sm',
-                user
-                  ? 'border-green-400/70 bg-green-400/20 text-green'
-                  : 'text-green/10 bg-slate-900/40 text-slate-100',
-              ]"
-            >
-              <p
-                class="text-xs uppercase tracking-widest"
-                :class="user ? 'text-green/90' : 'text-slate-200'"
-              >
-                当前状态
-              </p>
-              <p class="text-2xl font-semibold mt-1 text-green">
-                {{ user ? `已登录 ${user.name}` : "未登录" }}
-              </p>
-              <p v-if="user" class="text-sm mt-1 text-green">
-                ID: {{ user.user_main_id }}
-              </p>
-            </div>
-
-            <el-tabs v-model="activeTab" class="text-slate-900">
-              <el-tab-pane label="短信验证码" name="sms">
-                <template v-if="!user">
-                  <el-form label-position="top" class="space-y-4">
-                    <el-form-item label="手机号 (仅支持国内 11 位)">
-                      <el-input
-                        v-model="phone"
-                        maxlength="11"
-                        placeholder="例：13800000000"
-                      />
-                    </el-form-item>
-                    <el-form-item label="短信验证码">
-                      <div class="flex gap-2">
-                        <el-input
-                          v-model="smsCode"
-                          maxlength="6"
-                          placeholder="6 位数字"
-                        />
-                        <el-button
-                          type="primary"
-                          :loading="isSendingCode"
-                          :disabled="isSendingCode || countdown > 0"
-                          @click="handleSendCode"
-                        >
-                          {{ countdown > 0 ? `${countdown}s` : "获取验证码" }}
-                        </el-button>
-                      </div>
-                    </el-form-item>
-                    <el-button
-                      type="primary"
-                      :loading="isLoggingIn"
-                      @click="handleSmsLogin"
-                    >
-                      使用短信登录
-                    </el-button>
-                  </el-form>
-                </template>
-                <template v-else>
-                  <el-alert
-                    type="success"
-                    :closable="false"
-                    show-icon
-                    title="已登录"
-                    description="如需重新登录，请先退出。"
-                  />
-                </template>
-              </el-tab-pane>
-
-              <el-tab-pane label="Token 登录" name="token">
-                <el-form label-position="top" class="space-y-4">
-                  <el-form-item label="Bearer Token">
-                    <el-input
-                      v-model="manualToken"
-                      type="textarea"
-                      :rows="4"
-                      placeholder="粘贴已有 Token"
-                    />
-                  </el-form-item>
-                  <el-button
-                    type="primary"
-                    :loading="isLoggingIn"
-                    @click="handleTokenLogin"
-                  >
-                    使用 Token 登录
-                  </el-button>
-                </el-form>
-              </el-tab-pane>
-            </el-tabs>
-
-            <div class="mt-2 flex items-center justify-between">
-              <label class="flex items-center gap-2 text-sm text-slate-400">
-                <el-switch v-model="rememberMe" size="small" /> 记住
-                Token（本地加密存储）
-              </label>
-              <el-button
-                link
-                type="danger"
-                @click="clearAuth"
-                :disabled="!authToken"
-              >
-                退出登录
-              </el-button>
-            </div>
-          </el-card>
-        </section>
-
-        <section class="lg:col-span-3">
-          <el-card
-            body-style="{padding: '1.5rem'}"
-            shadow="hover"
-            class="space-y-6"
-          >
-            <div class="flex flex-wrap items-center gap-3">
-              <el-button type="primary" @click="triggerFileDialog"
-                >选择或拖入 PNG / JPG</el-button
-              >
-              <span class="text-sm text-slate-400">{{
-                selectedFileLabel
-              }}</span>
-              <input
-                ref="fileInputRef"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                class="hidden"
-                @change="onFileInput"
-              />
-            </div>
-
-            <div class="grid gap-4 lg:grid-cols-2">
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-lg font-semibold">
-                    杯贴效果 {{ CUP_WIDTH }}×{{ CUP_HEIGHT }} px
-                  </h3>
-                  <el-tag size="small" effect="dark">@2:3 比例</el-tag>
-                </div>
-                <div
-                  class="relative rounded-2xl border border-white/10 bg-black/30 p-3"
-                  @dragenter.prevent="handleDragEnter"
-                  @dragover.prevent="handleDragOver"
-                  @dragleave="handleDragLeave"
-                  @drop.prevent="handleDrop"
-                >
-                  <canvas
-                    v-show="hasPreview"
-                    ref="canvasRef"
-                    class="w-full rounded-lg"
-                    style="aspect-ratio: 596 / 832"
-                  />
-                  <div
-                    v-if="!hasPreview"
-                    class="flex h-[420px] flex-col items-center justify-center gap-2 text-slate-200"
-                  >
-                    <span class="text-xl">🖼️</span>
-                    <p class="text-sm">
-                      先选择一张图片，系统会自动压缩并裁切到
-                      596×832，也可用AI或其它工具处理后上传
-                    </p>
-                  </div>
-                  <div
-                    v-if="isRendering"
-                    class="absolute inset-3 rounded-lg bg-black/60 backdrop-blur-sm text-slate-50"
-                  >
-                    <div
-                      class="flex h-full items-center justify-center text-sm text-slate-50"
-                    >
-                      正在处理图片…
-                    </div>
-                  </div>
-                  <div
-                    v-if="isDraggingFile"
-                    class="absolute inset-3 flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-brand-300 bg-black/70 text-center text-sm text-slate-50 backdrop-blur"
-                  >
-                    <span class="text-xl">📥</span>
-                    <p>松开即可上传图片</p>
-                  </div>
-                </div>
-                <div
-                  class="flex items-center justify-between text-xs text-slate-400"
-                >
-                  <span
-                    >当前文件：{{ processedFormatLabel }} ·
-                    {{ processedSizeLabel }}</span
-                  >
-                  <span
-                    :class="[
-                      'font-semibold',
-                      exceedsLimit ? 'text-red-500' : 'text-slate-400',
-                    ]"
-                    >限制 ≤ {{ MAX_SIZE_KB }}KB</span
-                  >
-                </div>
-                <p v-if="compressionHint" class="text-xs text-amber-300">
-                  {{ compressionHint }}
-                </p>
-              </div>
-
-              <div class="space-y-4">
-                <el-form label-width="110px" class="text-slate-900">
-                  <el-form-item label="色彩模式">
-                    <el-radio-group v-model="toneMode" size="small">
-                      <el-radio-button label="binary">黑白</el-radio-button>
-                      <el-radio-button label="sampled">点阵</el-radio-button>
-                      <el-radio-button label="original">原图</el-radio-button>
-                    </el-radio-group>
-                  </el-form-item>
-                  <el-form-item v-if="toneMode === 'binary'" label="黑白阈值">
-                    <div class="w-full">
-                      <el-slider
-                        v-model="binaryThreshold"
-                        :min="60"
-                        :max="220"
-                        :step="5"
-                        show-stops
-                      />
-                      <p class="mt-1 text-xs text-slate-400">
-                        高于阈值的像素会被转成黑色，当前：{{
-                          binaryThreshold
-                        }}。
-                      </p>
-                    </div>
-                  </el-form-item>
-                  <el-form-item
-                    v-if="toneMode === 'sampled'"
-                    label="点阵阈值"
-                  >
-                    <div class="w-full">
-                      <el-slider
-                        v-model="dotThreshold"
-                        :min="40"
-                        :max="220"
-                        :step="5"
-                        show-stops
-                        @change="renderPreview"
-                      />
-                      <p class="mt-1 text-xs text-slate-400">
-                        块平均暗度高于阈值会变成纯黑，当前：{{ dotThreshold }}。
-                      </p>
-                    </div>
-                  </el-form-item>
-                  <el-form-item
-                    v-if="toneMode === 'sampled'"
-                    label="点阵形状"
-                  >
-                    <div class="w-full">
-                      <el-select
-                        v-model="dotPattern"
-                        class="w-full"
-                        size="small"
-                        @change="renderPreview"
-                      >
-                        <el-option
-                          v-for="option in DOT_PATTERN_CHOICES"
-                          :key="option.value"
-                          :label="option.label"
-                          :value="option.value"
-                        />
-                      </el-select>
-                      <p class="mt-1 text-xs text-slate-400">
-                        {{ activePatternHint }}
-                      </p>
-                    </div>
-                  </el-form-item>
-                  <el-form-item
-                    v-if="toneMode === 'sampled'"
-                    label="点阵像素"
-                  >
-                    <div class="w-full">
-                      <el-slider
-                        v-model="sampleDensity"
-                        :min="2"
-                        :max="24"
-                        :step="1"
-                        @change="renderPreview"
-                      />
-                      <p class="mt-1 text-xs text-slate-400 leading-relaxed">
-                        数值越小点阵越细腻，实际打印会略有偏差。当前：{{
-                          sampleDensity
-                        }}px。
-                      </p>
-                    </div>
-                  </el-form-item>
-                  <el-form-item label="缩放策略">
-                    <el-select v-model="fitMode" placeholder="选择适配方式">
-                      <el-option label="填满画布（裁切边缘）" value="cover" />
-                      <el-option label="完整保留（留空白）" value="contain" />
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item label="强制输出 PNG">
-                    <el-switch v-model="forcePng" />
-                  </el-form-item>
-                  <el-form-item label="文件名">
-                    <el-input
-                      v-model="downloadName"
-                      placeholder="上传时使用的文件名"
-                    />
-                  </el-form-item>
-                </el-form>
-
-                <div class="flex flex-wrap gap-3">
-                  <el-button
-                    type="success"
-                    :disabled="!canUpload"
-                    :loading="isUploading"
-                    @click="handleUpload"
-                  >
-                    上传杯贴
-                  </el-button>
-                  <el-button :disabled="!hasPreview" @click="handleDownload">
-                    下载 PNG
-                  </el-button>
-                  <el-button
-                    link
-                    type="info"
-                    :disabled="!hasPreview"
-                    @click="renderPreview"
-                  >
-                    重新渲染
-                  </el-button>
-                </div>
-                <p
-                  v-if="uploadDisabledReason"
-                  class="mt-2 text-xs text-red-300"
-                >
-                  无法上传：{{ uploadDisabledReason }}
-                </p>
-
-                <el-result
-                  v-if="uploadState"
-                  :icon="uploadState.type"
-                  :title="uploadState.message"
-                >
-                  <template #sub-title>
-                    <span
-                      v-if="uploadState.type === 'success'"
-                      class="text-xs text-slate-200"
-                    >
-                      如果工具对你有帮助，欢迎
-                      <a
-                        :href="DONATE_QR_URL"
-                        target="_blank"
-                        rel="noreferrer"
-                        class="ml-1 text-brand-300 underline decoration-dotted hover:text-brand-200"
-                        >赞赏</a
-                      >，谢谢支持 💛
-                    </span>
-                    <span
-                      v-else-if="uploadState.type === 'error'"
-                      class="text-xs text-red-100"
-                    >
-                      可能是触发了每日上传 10 张的限制，请稍后再试。
-                    </span>
-                  </template>
-                </el-result>
-              </div>
-            </div>
-          </el-card>
-        </section>
-      </div>
-
-      <section class="mt-6">
-        <div
-          class="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-900"
-        >
-          <div
-            class="flex items-center justify-between text-base font-semibold text-slate-100"
-          >
-            <span>常见问题</span>
-          </div>
-          <div class="mt-4 text-sm text-slate-700">
-            <article
-              class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
-            >
-              <div class="space-y-4">
-                <div>
-                  <p class="font-semibold text-slate-900">
-                    1.
-                    登录失败，提示“当前注册行为存在异常，请稍后再试或更换注册方式”。
-                  </p>
-                  <p class="mt-1 text-slate-400">
-                    确认手机号已经注册喜茶，并且能够正常登录喜茶 App / 小程序。
-                  </p>
-                </div>
-                <div>
-                  <p class="font-semibold text-slate-900">
-                    2. 上传失败，提示“文件格式不允许上传”/“文件大小不符合要求”。
-                  </p>
-                  <p class="mt-1 text-slate-400">
-                    JPG 会自动转换成PNG并降低分辨率以满足200KB要求，但不排除失败可能，可更换 PNG
-                    文件或更换小于200KB图片后重试。
-                  </p>
-                </div>
-                <div>
-                  <p class="font-semibold text-slate-900">
-                    3. 上传成功后小程序不显示
-                  </p>
-                  <p class="mt-1 text-slate-400">
-                    确认上传工具使用的账号和喜茶登录账号保持一致，随后刷新喜茶小程序。
-                  </p>
-                </div>
-                <div>
-                  <p class="font-semibold text-slate-900">4. 其他上传失败</p>
-                  <p class="mt-1 text-slate-400">
-                    1. 确认今日内上传未超过
-                    10张，并检查喜茶小程序是否能正常打开上传界面并制作喜贴。
-                  </p>
-                  <p class="mt-1 text-slate-400">
-                    2. 部分浏览器不支持现代webapi，可更换Chrome或Safari后重试上传。
-                  </p>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-      <footer
-        class="bottom-5 left-0 w-full mt-10 text-center text-xs text-slate-500"
+  <div class="studio">
+    <header class="topbar">
+      <a class="wordmark" href="/" @click.prevent
+        ><span class="brand-mark">喜</span><span>杯贴工作室</span></a
       >
-        免责声明：本服务仅供测试使用，可在
-        <a
-          href="https://github.com/SuInk/HeyTea-DIY-Toolkit"
-          target="_blank"
-          rel="noreferrer"
-          class="text-brand-300 underline decoration-dotted hover:text-brand-200"
+      <div class="topbar-actions">
+        <span class="local-badge"><i />本机工作台</span
+        ><button
+          class="account-button"
+          :disabled="isUploading"
+          @click="accountOpen = true"
         >
-          GitHub
-        </a>
-        克隆仓库自行搭建
-      </footer>
-    </div>
+          <span class="avatar">{{ user ? "✓" : "○" }}</span>{{
+            user ? user.name : "登录账号"
+          }}<span class="arrow">↗</span>
+        </button>
+      </div>
+    </header>
+    <main>
+      <div class="intro">
+        <div>
+          <h1>喜茶杯贴</h1>
+        </div>
+      </div>
+      <div class="workspace">
+        <section class="canvas-section" aria-label="杯贴预览">
+          <div class="canvas-toolbar">
+            <div>
+              <span class="status-dot" />{{ hasPreview ? "实时预览" : "画布"
+              }}<span class="toolbar-divider" />{{
+                hasPreview ? selectedFileLabel : "未选择图片"
+              }}
+            </div>
+            <button
+              class="text-button"
+              :disabled="isUploading"
+              @click="triggerFileDialog"
+            >
+              {{ hasPreview ? "更换图片" : "添加图片" }} <span>＋</span>
+            </button>
+          </div>
+          <input
+            ref="fileInputRef"
+            class="visually-hidden"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            @change="onFileInput"
+          />
+          <div
+            class="canvas-stage"
+            :class="{ 'is-dragging': isDraggingFile }"
+            @dragenter.prevent="handleDragEnter"
+            @dragover.prevent="handleDragOver"
+            @dragleave="handleDragLeave"
+            @drop.prevent="handleDrop"
+          >
+            <div class="paper">
+              <canvas
+                ref="canvasRef"
+                v-show="hasPreview"
+                aria-label="处理后的杯贴预览"
+              />
+              <div v-if="!hasPreview" class="empty-canvas">
+                <div class="empty-art" aria-hidden="true">
+                  <span class="art-sun" /><span class="art-mountain" /><span
+                    class="art-line"
+                  />
+                </div>
+                <h2>添加图片</h2>
+                <p>拖入图片，或点击选择</p>
+                <button
+                  class="primary-button"
+                  :disabled="isUploading"
+                  @click="triggerFileDialog"
+                >
+                  选择图片 <span>＋</span></button
+                ><small>PNG / JPG / WEBP · 不超过 20MB</small>
+              </div>
+              <div v-if="isRendering" class="render-overlay" role="status">
+                <span class="spinner" />正在生成预览
+              </div>
+            </div>
+            <div v-if="isDraggingFile" class="drop-overlay">松开以添加图片</div>
+          </div>
+          <div class="canvas-footer">
+            <span>{{
+              hasPreview
+                ? `${processedFormatLabel} · ${processedSizeLabel}`
+                : "图片在本机处理，不会自动上传"
+            }}</span><span :class="{ 'error-text': exceedsLimit }"
+              >{{ exceedsLimit ? "超过大小限制" : "输出 ≤ 200KB"
+              }}<span class="dot-separator">·</span>596 × 832 px</span
+            >
+          </div>
+          <p v-if="compressionHint" class="inline-note">
+            {{ compressionHint }}
+          </p>
+        </section>
+        <aside class="properties">
+          <EditorControls
+            v-model:tone-mode="toneMode"
+            v-model:threshold="binaryThreshold"
+            v-model:dot-threshold="dotThreshold"
+            v-model:density="sampleDensity"
+            v-model:pattern="dotPattern"
+            v-model:fit="fitMode"
+            v-model:png="forcePng"
+            v-model:filename="downloadName"
+            :disabled="isUploading"
+          />
+          <div class="publish-area">
+            <button
+              class="primary-button publish-button"
+              :disabled="
+                !hasPreview || isRendering || isUploading || exceedsLimit
+              "
+              @click="user ? handleUpload() : (accountOpen = true)"
+            >
+              {{ isUploading ? "正在上传…" : user ? "上传到喜茶" : "登录并上传"
+              }}<span>↗</span>
+            </button>
+            <div class="secondary-actions">
+              <button
+                :disabled="!hasPreview || isRendering"
+                @click="handleDownload"
+              >
+                下载 {{ processedFormatLabel === "JPG" ? "JPG" : "PNG" }}
+                <span>↓</span></button
+              ><button
+                :disabled="!hasPreview || isRendering || isUploading"
+                @click="renderPreview"
+              >
+                重新渲染 <span>↻</span>
+              </button>
+            </div>
+            <p class="field-hint">
+              {{
+                isRendering
+                  ? "预览更新中，请稍候"
+                  : uploadDisabledReason ||
+                    (canUpload ? "准备好了，可以上传" : "")
+              }}
+            </p>
+            <p
+              v-if="uploadState"
+              class="publish-result"
+              :class="uploadState.type"
+              role="status"
+            >
+              {{ uploadState.message }}
+            </p>
+          </div>
+        </aside>
+      </div>
+      <div v-if="notice" class="notice" :class="notice.type" role="status">
+        <span>{{ notice.message }}</span><button
+          aria-label="关闭提示"
+          @click="notice = null"
+        >
+          ×
+        </button>
+      </div>
+      <details class="help">
+        <summary>使用说明 <span>＋</span></summary>
+        <div class="help-grid">
+          <section>
+            <h3>图片与隐私</h3>
+            <p>
+              选择、调整和下载图片不需要登录。上传时直连喜茶，不经过项目作者服务器。
+            </p>
+          </section>
+          <section>
+            <h3>关于登录与上传</h3>
+            <p>
+              使用已注册的喜茶账号。短信未确认时，若已经收到验证码可直接登录，请勿连续重发。上传后到同一账号的小程序查看。
+            </p>
+          </section>
+          <section>
+            <h3>关于打印效果</h3>
+            <p>
+              预览为 596 × 832 像素，文件自动优化到 200KB
+              以内。实际效果与上传限制以喜茶为准。
+            </p>
+          </section>
+        </div>
+      </details>
+    </main>
+    <footer>
+      <div>
+        <a :href="GITHUB_URL" target="_blank" rel="noreferrer">开源项目 ↗</a
+        ><a :href="DONATE_QR_URL" target="_blank" rel="noreferrer"
+          >支持原作者 ↗</a
+        ><span>非喜茶官方产品</span>
+      </div>
+    </footer>
+    <AlertDialogRoot :open="confirmOpen"
+      ><AlertDialogPortal
+        ><AlertDialogOverlay class="dialog-overlay" /><AlertDialogContent
+          class="account-dialog"
+          ><AlertDialogTitle class="dialog-heading"
+            >再次上传这张杯贴？</AlertDialogTitle
+          ><AlertDialogDescription class="dialog-description"
+            >刚刚已上传过相同图片。继续会再次向喜茶提交。</AlertDialogDescription
+          >
+          <div class="secondary-actions">
+            <button @click="resolveConfirmation(false)">取消</button
+            ><button class="primary-button" @click="resolveConfirmation(true)">
+              继续上传
+            </button>
+          </div></AlertDialogContent
+        ></AlertDialogPortal
+      ></AlertDialogRoot
+    ><AccountDialog v-model="accountOpen"
+      ><template v-if="user"
+        ><div class="signed-in">
+          <span>✓</span>
+          <h3>{{ user.name }}</h3>
+          <p>已连接喜茶账号</p>
+        </div>
+        <button
+          class="secondary-button full-width"
+          :disabled="isUploading"
+          @click="clearAuth()"
+        >
+          退出登录
+        </button></template
+      ><template v-else
+        ><div class="tabs account-tabs">
+          <button
+            :aria-pressed="activeTab === 'sms'"
+            :data-state="activeTab === 'sms' ? 'active' : ''"
+            @click="activeTab = 'sms'"
+          >
+            短信登录</button
+          ><button
+            :aria-pressed="activeTab === 'token'"
+            :data-state="activeTab === 'token' ? 'active' : ''"
+            @click="activeTab = 'token'"
+          >
+            已有 Token
+          </button>
+        </div>
+        <form v-if="activeTab === 'sms'" @submit.prevent="handleSmsLogin">
+          <label class="field-label" for="phone">手机号</label
+          ><input
+            id="phone"
+            v-model="phone"
+            type="tel"
+            inputmode="tel"
+            autocomplete="tel-national"
+            maxlength="11"
+            placeholder="输入 11 位手机号"
+            :disabled="isSendingCode || isLoggingIn"
+          /><label class="field-label" for="sms">短信验证码</label>
+          <div class="sms-row">
+            <input
+              id="sms"
+              v-model="smsCode"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              placeholder="6 位验证码"
+            /><button
+              type="button"
+              class="secondary-button"
+              :disabled="isSendingCode || countdown > 0"
+              @click="handleSendCode()"
+            >
+              {{
+                isSendingCode
+                  ? "发送中…"
+                  : countdown > 0
+                    ? `${countdown}s`
+                    : "获取验证码"
+              }}
+            </button>
+          </div>
+          <button
+            class="primary-button full-width"
+            :disabled="isLoggingIn || isSendingCode || isUploading"
+          >
+            {{ isLoggingIn ? "正在登录…" : "连接账号" }}
+          </button>
+        </form>
+        <form v-else @submit.prevent="handleTokenLogin">
+          <label class="field-label" for="token">Bearer Token</label
+          ><textarea
+            id="token"
+            v-model="manualToken"
+            rows="4"
+            autocomplete="off"
+            placeholder="粘贴你自己的已有 Token"
+          /><button
+            class="primary-button full-width"
+            :disabled="isLoggingIn || isUploading"
+          >
+            {{ isLoggingIn ? "正在登录…" : "使用 Token 连接" }}
+          </button>
+        </form></template
+      >
+      <p v-if="notice" class="account-notice" role="status">
+        {{ notice.message }}
+      </p>
+      <p class="privacy-note">
+        登录信息只保留在当前页面内存，刷新后需要重新登录。
+      </p></AccountDialog
+    >
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { isAxiosError } from "axios";
-import CryptoJS from "crypto-js";
-
-import {
-  CAPTCHA_APP_ID,
-  CUP_HEIGHT,
-  CUP_WIDTH,
-  MAX_UPLOAD_BYTES,
-} from "@/config/heytea";
-import { requestCaptcha } from "@/utils/captcha";
-import {
-  readFileAsImage,
-  renderToCupCanvas,
-  type DotPattern,
-  type ToneMode,
-} from "@/utils/image";
-import {
-  fetchUserInfo,
-  loginWithSms,
-  sendSmsCode,
-  uploadCupSticker,
-  type CaptchaPayload,
-  type HeyTeaUser,
-} from "@/services/heytea";
-
-const GITHUB_URL = "https://github.com/SuInk/HeyTea-DIY-Toolkit";
-const STORAGE_KEY = "heytea-token";
-const DONATE_QR_URL = `${import.meta.env.BASE_URL}donate.jpg`;
-const MESSAGE_DURATION = 7000;
-const DOT_PATTERN_CHOICES: Array<{
-  value: DotPattern;
-  label: string;
-  hint: string;
-}> = [
-  {
-    value: "circle",
-    label: "圆形点阵",
-    hint: "以圆形为中心向外扩散，最贴近传统印刷圆点。",
-  },
-  {
-    value: "diamond",
-    label: "菱形点阵",
-    hint: "以菱形方向铺开，适合斜向纹理。",
-  },
-  {
-    value: "cross",
-    label: "十字形点阵",
-    hint: "优先沿十字方向填充，线条感更强。",
-  },
-  {
-    value: "grid",
-    label: "方格点阵",
-    hint: "按像素顺序逐行堆叠，方块颗粒规则整齐。",
-  },
-];
-
-type ToastType = "success" | "error" | "warning" | "info";
-
-function showToast(type: ToastType, message: string) {
-  ElMessage({
-    type,
-    message,
-    duration: MESSAGE_DURATION,
-    showClose: true,
-    offset: 20,
-  });
-}
-
-const showSuccessMessage = (message: string) => showToast("success", message);
-const showErrorMessage = (message: string) => showToast("error", message);
-const showWarningMessage = (message: string) => showToast("warning", message);
-const showInfoMessage = (message: string) => showToast("info", message);
-
-type UploadState = {
-  type: "success" | "warning" | "error";
-  message: string;
-  details?: string;
-};
-
-function extractServerMessage(payload: unknown): string | null {
-  if (!payload) {
-    return null;
-  }
-  if (typeof payload === "string") {
-    return payload;
-  }
-  if (typeof payload === "object") {
-    const record = payload as Record<string, unknown>;
-    for (const key of ["message", "msg", "error"]) {
-      const value = record[key];
-      if (typeof value === "string") {
-        return value;
-      }
-    }
-  }
-  return null;
-}
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (isAxiosError(error)) {
-    const serverMessage = extractServerMessage(error.response?.data);
-    if (serverMessage) {
-      return serverMessage;
-    }
-  }
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-  if (typeof error === "string") {
-    return error;
-  }
-  return fallback;
-}
-
-function formatServerPayload(payload: unknown): string | null {
-  if (payload === null || payload === undefined) {
-    return null;
-  }
-  if (typeof payload === "string") {
-    return payload;
-  }
-  try {
-    return JSON.stringify(payload, null, 2);
-  } catch {
-    return String(payload);
-  }
-}
-
-const activeTab = ref<"sms" | "token">("sms");
-const phone = ref("");
-const smsCode = ref("");
-const manualToken = ref("");
-const rememberMe = ref(true);
-const authToken = ref<string | null>(localStorage.getItem(STORAGE_KEY));
-const user = ref<HeyTeaUser | null>(null);
-
-const isSendingCode = ref(false);
-const isLoggingIn = ref(false);
-const countdown = ref(0);
-let countdownTimer: number | null = null;
-
-const fileInputRef = ref<HTMLInputElement>();
-const canvasRef = ref<HTMLCanvasElement>();
-
-const workingImage = ref<HTMLImageElement | null>(null);
-const processedBlob = ref<Blob | null>(null);
-const toneMode = ref<ToneMode>("binary");
-const dotPattern = ref<DotPattern>("circle");
-const isDraggingFile = ref(false);
-const binaryThreshold = ref(170);
-const sampleDensity = ref(6);
-const dotThreshold = ref(170);
-const fitMode = ref<"cover" | "contain">("cover");
-const forcePng = ref(true);
-const isRendering = ref(false);
-const downloadName = ref("target.png");
-const selectedFileLabel = computed(() =>
-  processedBlob.value
-    ? buildFilename(downloadName.value, processedBlob.value)
-    : downloadName.value || "未选择文件"
-);
-const uploadState = ref<UploadState | null>(null);
-const isUploading = ref(false);
-const compressionHint = ref("");
-const lastUploadHash = ref<string | null>(null);
-
-const hasPreview = computed(() => Boolean(processedBlob.value));
-const processedSizeLabel = computed(() =>
-  processedBlob.value
-    ? `${(processedBlob.value.size / 1024).toFixed(1)} KB`
-    : "--"
-);
-const processedFormatLabel = computed(() =>
-  processedBlob.value
-    ? processedBlob.value.type === "image/jpeg"
-      ? "JPG"
-      : "PNG"
-    : "--"
-);
-const activePatternHint = computed(
-  () =>
-    DOT_PATTERN_CHOICES.find((choice) => choice.value === dotPattern.value)
-      ?.hint ?? "选择点阵形状来调整灰阶纹理。"
-);
-const exceedsLimit = computed(
-  () => (processedBlob.value?.size ?? 0) > MAX_UPLOAD_BYTES
-);
-const MAX_SIZE_KB = Math.round(MAX_UPLOAD_BYTES / 1024);
-const uploadDisabledReason = computed(() => {
-  if (!authToken.value || !user.value) {
-    return "请先登录";
-  }
-  if (!processedBlob.value) {
-    return "请先选择并渲染图片";
-  }
-  if (exceedsLimit.value) {
-    return `处理后的图片超过 ${MAX_SIZE_KB} KB`;
-  }
-  return null;
-});
-const canUpload = computed(
-  () => !uploadDisabledReason.value && !isUploading.value
-);
-
-function triggerFileDialog() {
-  fileInputRef.value?.click();
-}
-
-function startCountdown() {
-  countdown.value = 60;
-  if (countdownTimer) {
-    window.clearInterval(countdownTimer);
-  }
-  countdownTimer = window.setInterval(() => {
-    countdown.value -= 1;
-    if (countdown.value <= 0 && countdownTimer) {
-      window.clearInterval(countdownTimer);
-      countdownTimer = null;
-    }
-  }, 1000);
-}
-
-async function handleSendCode(payload?: CaptchaPayload) {
-  if (!/^1\d{10}$/.test(phone.value)) {
-    showErrorMessage("请输入有效的 11 位手机号");
-    return;
-  }
-
-  if (!payload) {
-    isSendingCode.value = true;
-  }
-
-  try {
-    const result = await sendSmsCode(phone.value, payload);
-    if (result.requiresCaptcha) {
-      isSendingCode.value = false;
-      const captcha = await requestCaptcha(CAPTCHA_APP_ID);
-      await handleSendCode({
-        ticket: captcha.ticket,
-        randstr: captcha.randstr,
-      });
-      return;
-    }
-
-    startCountdown();
-    showSuccessMessage("验证码已发送");
-  } catch (error) {
-    const message = getErrorMessage(error, "发送失败");
-    showErrorMessage(message);
-  } finally {
-    if (!payload) {
-      isSendingCode.value = false;
-    }
-  }
-}
-
-async function bindToken(token: string) {
-  authToken.value = token;
-  manualToken.value = token;
-  if (rememberMe.value) {
-    localStorage.setItem(STORAGE_KEY, token);
-  } else {
-    localStorage.removeItem(STORAGE_KEY);
-  }
-  try {
-    await resolveUserProfile();
-  } catch (error) {
-    clearAuth(false);
-    throw error;
-  }
-}
-
-async function handleSmsLogin() {
-  if (!/^1\d{10}$/.test(phone.value)) {
-    showErrorMessage("请输入正确的手机号");
-    return;
-  }
-  if (!/^\d{4,6}$/.test(smsCode.value)) {
-    showErrorMessage("请输入收到的验证码");
-    return;
-  }
-
-  isLoggingIn.value = true;
-  try {
-    const token = await loginWithSms(phone.value, smsCode.value);
-    await bindToken(token);
-    showSuccessMessage("登录成功");
-  } catch (error) {
-    const message = getErrorMessage(error, "登录失败");
-    showErrorMessage(`${message}（请确认手机号已注册喜茶账号）`);
-  } finally {
-    isLoggingIn.value = false;
-  }
-}
-
-async function handleTokenLogin() {
-  const token = manualToken.value.trim();
-  if (!token) {
-    showErrorMessage("请输入有效的 Token");
-    return;
-  }
-  isLoggingIn.value = true;
-  try {
-    await bindToken(token);
-    showSuccessMessage("Token 登录成功");
-  } catch (error) {
-    manualToken.value = token;
-    const message = getErrorMessage(error, "Token 登录失败");
-    showErrorMessage(message);
-  } finally {
-    isLoggingIn.value = false;
-  }
-}
-
-async function resolveUserProfile() {
-  if (!authToken.value) {
-    throw new Error("Token 不存在");
-  }
-  const info = await fetchUserInfo(authToken.value);
-  user.value = info;
-  return info;
-}
-
-function clearAuth(showToast = true) {
-  authToken.value = null;
-  manualToken.value = "";
-  user.value = null;
-  uploadState.value = null;
-  lastUploadHash.value = null;
-  localStorage.removeItem(STORAGE_KEY);
-  if (showToast) {
-    showSuccessMessage("已退出登录");
-  }
-}
-
-async function onFileInput(event: Event) {
-  const files = (event.target as HTMLInputElement).files;
-  if (!files?.length) return;
-  await handleFile(files[0]);
-  (event.target as HTMLInputElement).value = "";
-}
-
-async function handleFile(file: File) {
-  try {
-    const image = await readFileAsImage(file);
-    workingImage.value = image;
-    downloadName.value = file.name.replace(/\.[^.]+$/, "") + ".png";
-    await renderPreview();
-  } catch (error) {
-    const message = getErrorMessage(error, "图片处理失败");
-    showErrorMessage(message);
-  }
-}
-
-function hasFilePayload(event: DragEvent) {
-  return Array.from(event.dataTransfer?.types ?? []).includes("Files");
-}
-
-function handleDragEnter(event: DragEvent) {
-  if (hasFilePayload(event)) {
-    isDraggingFile.value = true;
-  }
-}
-
-function handleDragOver(event: DragEvent) {
-  if (!hasFilePayload(event)) {
-    return;
-  }
-  event.dataTransfer!.dropEffect = "copy";
-  isDraggingFile.value = true;
-}
-
-function handleDragLeave(event: DragEvent) {
-  const currentTarget = event.currentTarget as HTMLElement | null;
-  const related = event.relatedTarget as Node | null;
-  if (!currentTarget || !related || !currentTarget.contains(related)) {
-    isDraggingFile.value = false;
-  }
-}
-
-async function handleDrop(event: DragEvent) {
-  if (!hasFilePayload(event)) {
-    isDraggingFile.value = false;
-    return;
-  }
-  isDraggingFile.value = false;
-  const files = event.dataTransfer?.files;
-  if (files?.length) {
-    await handleFile(files[0]);
-  }
-}
-
-async function renderPreview() {
-  if (!canvasRef.value || !workingImage.value) {
-    return;
-  }
-  isRendering.value = true;
-  try {
-    const blob = await renderToCupCanvas(canvasRef.value, workingImage.value, {
-      toneMode: toneMode.value,
-      threshold:
-        toneMode.value === "binary"
-          ? binaryThreshold.value
-          : toneMode.value === "sampled"
-          ? dotThreshold.value
-          : undefined,
-      sampleDensity: sampleDensity.value,
-      dotPattern: dotPattern.value,
-      fit: fitMode.value,
-      targetFormat: forcePng.value ? "png" : "auto",
-      maxBytes: MAX_UPLOAD_BYTES,
-    });
-    processedBlob.value = blob;
-    if (forcePng.value && blob.type !== "image/png") {
-      compressionHint.value = `PNG 超出 ${MAX_SIZE_KB}KB，已自动压缩为 JPG。`;
-      showWarningMessage(compressionHint.value);
-    } else {
-      compressionHint.value = "";
-    }
-    uploadState.value = null;
-  } catch (error) {
-    const message = getErrorMessage(error, "渲染失败");
-    showErrorMessage(message);
-  } finally {
-    isRendering.value = false;
-  }
-}
-
-async function handleUpload() {
-  if (!authToken.value || !user.value || !processedBlob.value) {
-    showErrorMessage("请先登录并准备好图片");
-    return;
-  }
-  isUploading.value = true;
-  uploadState.value = null;
-  try {
-    const currentHash = await hashBlob(processedBlob.value);
-    if (lastUploadHash.value && lastUploadHash.value === currentHash) {
-      try {
-        await ElMessageBox.confirm(
-          "检测到你刚刚上传过相同的图片，是否继续？",
-          "重复上传提醒",
-          {
-            confirmButtonText: "继续上传",
-            cancelButtonText: "取消",
-            type: "warning",
-          }
-        );
-      } catch {
-        showInfoMessage("已取消重复上传");
-        isUploading.value = false;
-        return;
-      }
-    }
-
-    await uploadCupSticker({
-      token: authToken.value,
-      userMainId: user.value.user_main_id,
-      blob: processedBlob.value,
-      filename: buildFilename(downloadName.value, processedBlob.value),
-    });
-    uploadState.value = { type: "success", message: "上传成功 🎉" };
-    lastUploadHash.value = currentHash;
-    showSuccessMessage("杯贴上传成功");
-  } catch (error) {
-    const message = getErrorMessage(error, "上传失败");
-    const details = isAxiosError(error)
-      ? formatServerPayload(error.response?.data)
-      : null;
-    const nextState: UploadState = { type: "error", message };
-    if (details) {
-      nextState.details = details;
-      console.error("HeyTea upload failed:", details);
-    }
-    uploadState.value = nextState;
-    showErrorMessage(message);
-  } finally {
-    isUploading.value = false;
-  }
-}
-
-function handleDownload() {
-  if (!processedBlob.value) return;
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(processedBlob.value);
-  link.href = url;
-  link.download = buildFilename(downloadName.value, processedBlob.value);
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-watch(
-  [
-    toneMode,
-    binaryThreshold,
-    dotThreshold,
-    sampleDensity,
-    dotPattern,
-    fitMode,
-    forcePng,
-  ],
-  () => {
-    if (workingImage.value) {
-      renderPreview();
-    }
-  }
-);
-
-watch(rememberMe, (next) => {
-  if (!next) {
-    localStorage.removeItem(STORAGE_KEY);
-  } else if (authToken.value) {
-    localStorage.setItem(STORAGE_KEY, authToken.value);
-  }
-});
-
-if (authToken.value) {
-  manualToken.value = authToken.value;
-  resolveUserProfile().catch((error) => {
-    const message = getErrorMessage(error, "获取用户信息失败");
-    showErrorMessage(message);
-    clearAuth(false);
-  });
-}
-
-onUnmounted(() => {
-  if (countdownTimer) {
-    window.clearInterval(countdownTimer);
-  }
-});
-
-function buildFilename(base: string, blob?: Blob | null) {
-  const cleanBase = base ? base.replace(/\.[^.]+$/, "") : "cup";
-  const ext = blob?.type === "image/jpeg" ? ".jpg" : ".png";
-  return `${cleanBase}${ext}`;
-}
-
-async function hashBlob(blob: Blob): Promise<string> {
-  const buffer = await blob.arrayBuffer();
-  const subtle = await getSubtleCrypto();
-  if (subtle) {
-    const digest = await subtle.digest("SHA-1", buffer);
-    return arrayBufferToHex(digest);
-  }
-  return hashWithCryptoJS(buffer);
-}
-
-function hashWithCryptoJS(buffer: ArrayBuffer): string {
-  const wordArray = arrayBufferToWordArray(buffer);
-  return CryptoJS.SHA1(wordArray).toString(CryptoJS.enc.Hex);
-}
-
-function arrayBufferToWordArray(buffer: ArrayBuffer): CryptoJS.lib.WordArray {
-  const bytes = new Uint8Array(buffer);
-  const words: number[] = [];
-  for (let i = 0; i < bytes.length; i += 1) {
-    words[i >>> 2] = (words[i >>> 2] ?? 0) | (bytes[i] << (24 - (i & 3) * 8));
-  }
-  return CryptoJS.lib.WordArray.create(words, bytes.length);
-}
-
-function arrayBufferToHex(buffer: ArrayBuffer) {
-  return Array.from(new Uint8Array(buffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-type PortableSubtle = Pick<SubtleCrypto, "digest">;
-
-let cachedSubtle: PortableSubtle | null = null;
-let subtleStatus: "unknown" | "available" | "unavailable" = "unknown";
-
-async function getSubtleCrypto(): Promise<PortableSubtle | null> {
-  if (subtleStatus !== "unknown") {
-    return cachedSubtle;
-  }
-  const globalCrypto =
-    typeof globalThis !== "undefined" ? globalThis.crypto : undefined;
-  if (globalCrypto?.subtle) {
-    cachedSubtle = globalCrypto.subtle;
-    subtleStatus = "available";
-    return cachedSubtle;
-  }
-  if (import.meta.env.SSR) {
-    try {
-      const nodeCrypto = await import("node:crypto");
-      if (nodeCrypto?.webcrypto?.subtle) {
-        cachedSubtle = nodeCrypto.webcrypto.subtle;
-        subtleStatus = "available";
-        return cachedSubtle;
-      }
-    } catch (error) {
-      console.warn("Failed to load Node crypto for SubtleCrypto:", error);
-    }
-  }
-  subtleStatus = "unavailable";
-  cachedSubtle = null;
-  return null;
-}
-</script>

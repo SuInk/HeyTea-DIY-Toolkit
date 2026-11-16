@@ -10,7 +10,8 @@
     "frontend:start": "npm run start --prefix frontend",
     "server:start": "npm run start --prefix server",
     "build": "npm run frontend:build",
-    "start": "npm run frontend:build && npm run server:start"
+    "start": "npm run frontend:build && npm run server:start",
+    "test:local": "node --test tests/*.test.cjs"
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/SuInk/heytea-diy-toolkit/issues"

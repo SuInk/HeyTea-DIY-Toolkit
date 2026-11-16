@@ -1,8 +1,4 @@
 function resolveApiRoot() {
-  const envBase = (import.meta.env.VITE_API_BASE || '').trim().replace(/\/$/, '');
-  if (envBase) {
-    return envBase;
-  }
   if (typeof window !== 'undefined') {
     return window.location.origin.replace(/\/$/, '');
   }

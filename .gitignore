@@ -1,1 +1,9 @@
 node_modules
+# Private local maintenance and generated artifacts
+LOCAL-SETUP.md
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+coverage/
