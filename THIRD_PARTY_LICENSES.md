@@ -1,8 +1,8 @@
-# Third-party dependency license inventory
+# 第三方依赖许可
 
-Project code remains MIT; dependencies retain their own licenses. This inventory describes the root workspace lockfile and is not a relicensing notice. node_modules and compiled bundles are not committed. When distributing a bundled build, retain each included package’s license and copyright notices, including Apache NOTICE and CC-BY attribution where applicable.
+以下清单对应根目录锁文件。分发构建产物时，请保留所含依赖的许可证、版权及必要的 NOTICE / 署名。
 
-Lockfile metadata is informational, not a legal conclusion. busboy and streamsearch omit metadata but their installed LICENSE files state MIT.
+busboy 和 streamsearch 的 MIT 许可依据其 LICENSE 文件补充。
 
 | Package | Locked version | License metadata |
 |---|---|---|
